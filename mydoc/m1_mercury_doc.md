@@ -1,8 +1,34 @@
 # Mercury Documentation
 
+- [1. Overview](#1-overview)
+- [2. 网络抽象层](#2-网络抽象层)
+  - [2.1. NA接口](#21-na接口)
+  - [2.2. 可用的插件](#22-可用的插件)
+    - [2.2.1. BMI](#221-bmi)
+    - [2.2.2. MPI](#222-mpi)
+    - [2.2.3. SM](#223-sm)
+- [3. RPC Layer](#3-rpc-layer)
+  - [3.1. HG接口](#31-hg接口)
+    - [3.1.1. Origin](#311-origin)
+    - [3.1.2. Target](#312-target)
+    - [3.1.3. 进度与取消](#313-进度与取消)
+- [4. Bulk Layer 批量层](#4-bulk-layer-批量层)
+  - [4.1. HG批量接口](#41-hg批量接口)
+- [5. 高级RPC层](#5-高级rpc层)
+  - [5.1. 生成proc例程](#51-生成proc例程)
+    - [5.1.1. Example](#511-example)
+  - [5.2. 为现有结构生成proc例程](#52-为现有结构生成proc例程)
+    - [5.2.1. Example](#521-example)
+  - [5.3. 预定义类型](#53-预定义类型)
+  - [5.4. 注册RPC](#54-注册rpc)
+    - [5.4.1. Example](#541-example)
+- [6. 其他参考](#6-其他参考)
+
+doxygen文档：<https://mercury-hpc.github.io/doxygen/index.html>
+
 文档反映了Mercury从v1.0.1开始的API，可以用作Mercury库的简介。请查看[see also](https://mercury-hpc.github.io/documentation/#see-also)部分以获取其他文档。
 
-## Overview
+## 1. Overview
 
 Mercury由三个主要层组成：
 
@@ -17,13 +43,13 @@ Mercury由三个主要层组成：
 
 根据定义，RPC调用由一个进程（称为origin）发起，并转发到另一个进程，该进程将执行该调用，并称为target。双方（origin和target）都使用RPC处理器对通过接口发送的参数进行序列化和反序列化。以相对较小的参数调用函数会导致使用网络抽象层公开的**短消息传递机制**，而包含较大数据参数的函数还使用**远程内存访问（RMA）机制**。
 
-## 网络抽象层
+## 2. 网络抽象层
 
 RPC层和批量层在内部都使用**网络抽象（NA）层**（因此，普通mercury用户不希望直接使用它，请参阅RPC层部分）。网络抽象（NA）层提供了一组最少的函数调用，这些函数抽象了基础网络结构fabric，可用于提供以下功能：target地址查找、具有非预期和预期消息传递的点对点消息传递、远程内存访问、进度和取消。该API是非阻塞的，并使用**回调机制**，以便高层可以更轻松地提供异步执行：取得进展（在内部或在调用`NA_Progress()`之后）并且操作完成时，用户回调将放置在**完成队列**。然后，可以在调用`NA_Trigger()`之后使该回调出队并分别执行。
 
 NA层使用**插件机制**，因此可以在运行时轻松添加和选择对各种网络协议的支持。
 
-### NA接口
+### 2.1. NA接口
 
 通常，**第一步**包括初始化NA接口并选择将要使用的基础插件。可以在NA级别或HG级别（请参阅RPC层部分）完成此操作。使用指定的`info_string`初始化NA接口会导致创建新的`na_class_t`对象。请参阅[可用的插件章节](https://mercury-hpc.github.io/documentation/#available-plugins)，以获取有关`info_string`格式的更多信息。另外，可以指定`na_class_t`对象是否在侦听（用于传入连接）——**这是唯一定义“服务器”特定行为的时间**，所有后续调用在“客户端”和“服务器”之间没有任何区别，相反只是使用`origin`和`target`两个概念。
 
@@ -95,9 +121,9 @@ na_return_t NA_Addr_free(na_class_t *na_class, na_addr_t addr);
 
 其他例程例如`NA_Msg_send_unexpected()`，`NA_Msg_send_expected()`，`NA_Msg_recv_unexpected()`，`NA_Msg_recv_expected()`，`NA_Put()`，`NA_Get()`等在内部使用,不需要直接使用它们。
 
-### 可用的插件
+### 2.2. 可用的插件
 
-#### BMI
+#### 2.2.1. BMI
 
 BMI库本身不再需要进行除基本维护以外的主动功能开发，但与BMI的TCP方法一起使用时，BMI Mercury NA插件为IP网络提供了非常稳定且性能合理的选项。
 
@@ -110,7 +136,7 @@ BMI库本身不再需要进行除基本维护以外的主动功能开发，但�
 - 不支持TCP以外的其他BMI方法。
 - 有关BMI的一般信息，请参见本[论文](http://ieeexplore.ieee.org/abstract/document/1420118/)。
 
-#### MPI
+#### 2.2.2. MPI
 
 MPI实施几乎可以在所有平台上使用，并且MPI Mercury NA插件为原型设计和功能测试提供了一个方便的选择。但是，它并未针对性能进行优化，并且在用于持久性服务时存在一些实际限制。
 
@@ -120,7 +146,7 @@ MPI实施几乎可以在所有平台上使用，并且MPI Mercury NA插件为原
 - RMA（用于Mercury批量操作）通过点对点消息传递进行仿真（注意：创建MPI窗口需要集体协调，因此不适合RPC使用）。
 - 大量的CPU消耗（进度函数反复轮询待完成的操作以完成操作）。
 
-#### SM
+#### 2.2.3. SM
 
 （自v0.9.0起）这是Mercury随附的集成共享内存NA插件。插件是稳定的，并且为**本地节点通信**提供了明显更好的性能。
 此插件的最终目标是在其他NA插件使用`auto_sm`初始化选项连接到本地服务时为它们提供透明的快捷方式（有关更多详细信息，请参阅[共享内存](https://mercury-hpc.github.io/documentation/2018/10/29/shared-memory.html)部分），但它也可以用作单插件的主要传输方式
@@ -128,7 +154,7 @@ MPI实施几乎可以在所有平台上使用，并且MPI Mercury NA插件为原
 
 ([更多...](https://mercury-hpc.github.io/documentation/#available-plugins))
 
-## RPC Layer
+## 3. RPC Layer
 
 RPC层为用户提供了用于发送、接收和执行RPC的必要组件。该层由两个子层组成：**HG核心RPC层**，它将RPC操作定义为缓冲区，该缓冲区被发送到目标并触发与该操作相关的回调；**HG RPC层**，包括函数参数的序列化和反序列化。
 
@@ -136,7 +162,7 @@ RPC层为用户提供了用于发送、接收和执行RPC的必要组件。该�
 
 限制发送给目标的初始RPC请求的大小也有助于**扩展性**，因为如果大量进程同时访问同一目标，它将避免不必要的服务器资源消耗。根据所需的控制程度，所有这些步骤都可以由Mercury透明处理或直接暴露给用户。
 
-### HG接口
+### 3.1. HG接口
 
 要初始化HG RPC接口，可以使用两个选项，要么使用默认的`HG_Init()`函数，然后按照该[部分](https://mercury-hpc.github.io/documentation/#available-plugins)的说明指定一个初始化信息字符串，该字符串将在内部创建自己的NA类：
 
@@ -196,7 +222,7 @@ hg_return_t HG_Registered_disable_response(hg_class_t *hg_class, hg_id_t id,
 
 如[概述](https://mercury-hpc.github.io/documentation/#overview)部分所述，客户端与服务器之间没有真正的区别，因为可能希望客户端同时充当其他进程的服务器。因此，该接口仅使用origin和target的区别。
 
-#### Origin
+#### 3.1.1. Origin
 
 在典型情况下，origin将**首先**查找一个target并获取地址。这可以通过以下方式实现：
 
@@ -250,7 +276,7 @@ hg_return_t HG_Free_output(hg_handle_t handle, void *out_struct);
 为了安全起见，如有必要，必须在调用`HG_Free_output()`之前复制结果。
 请注意，如果RPC没有响应，则在成功发送RPC之后（即没有要检索的输出）便表示该RPC已经完成了。
 
-#### Target
+#### 3.1.2. Target
 
 在目标上，**必须**定义传递给`HG_Register()`函数的RPC回调。
 
@@ -281,7 +307,7 @@ hg_return_t HG_Respond(hg_handle_t handle, hg_cb_t callback, void *arg,
 
 此调用也是非阻塞的。完成后，关联的回调将被放置到完成队列中。然后可以在调用`HG_Trigger()`之后触发它。请注意，在RPC没有响应的情况下，调用`HG_Respond()`将返回错误。
 
-#### 进度与取消
+#### 3.1.3. 进度与取消
 
 Mercury使用回调模型。回调将传递给非阻塞函数，并在操作完成后被推送到上下文的完成队列中。通过调用`HG_Progress()`获得明确的进度。`HG_Progress()`返回操作什么时候完成、在完成队列中或已超时时。
 
@@ -305,7 +331,7 @@ hg_return_t HG_Trigger(hg_context_t *context, unsigned int timeout,
 hg_return_t HG_Cancel(hg_handle_t handle);
 ```
 
-## Bulk Layer 批量层
+## 4. Bulk Layer 批量层
 
 除了上一层之外，某些RPC可能需要传输大量数据。对于这些RPC，可以使用批量层。它建立在网络抽象层中定义的**RMA协议**的基础上，可防止中间存储器复制。
 
@@ -313,7 +339,7 @@ origin进程通过创建批量描述符（包含虚拟内存地址信息，要�
 
 由于在传输完成时未发送任何明确的ack消息，因此源进程只能假定在接收到来自目标的RPC响应后便完成了对其本地内存的访问。因此，在RPC没有响应的情况下，启动批量传输时应格外小心，以确保在**可以安全地释放和访问其公开内存时**通知origin。
 
-### HG批量接口
+### 4.1. HG批量接口
 
 该接口使用由HG RPC层定义的类和执行上下文。**要启动批量传输，需要在源和目标上都创建一个批量描述符**，然后将其传递给`HG_Bulk_transfer()`调用。
 
@@ -374,11 +400,11 @@ hg_return_t HG_Bulk_bind(hg_bulk_t handle, hg_context_t *context);
 hg_addr_t HG_Bulk_get_addr(hg_bulk_t handle);
 ```
 
-## 高级RPC层
+## 5. 高级RPC层
 
 为了方便起见，高级RPC层提供了**宏**和**例程**，这些宏和例程可以减少使用Mercury发送RPC调用所需的代码量。对于宏，Mercury利用Boost预处理程序库，以便用户可以生成序列化和反序列化函数参数所需的所有样板代码。
 
-### 生成proc例程
+### 5.1. 生成proc例程
 
 第一个宏称为`MERCURY_GEN_PROC()`，它生成结构体和proc函数以**序列化**参数。结构体字段包含输入参数或输出参数。生成的proc例程使用预先存在的类型对字段进行序列化和反序列化。
 
@@ -386,7 +412,7 @@ hg_addr_t HG_Bulk_get_addr(hg_bulk_t handle);
 MERCURY_GEN_PROC(struct_type_name, fields)
 ```
 
-#### Example
+#### 5.1.1. Example
 
 以下函数具有两个输入参数，一个输出参数和一个返回值。
 
@@ -429,7 +455,7 @@ hg_proc_rpc_open_in_t(hg_proc_t proc, void *data)
 
 请注意**括号**分隔字段的名称和其类型。然后，**每个字段都用另一对括号分隔**。这遵循Boost预处理程序库的sequence数据类型。
 
-### 为现有结构生成proc例程
+### 5.2. 为现有结构生成proc例程
 
 但是，在某些情况下，Mercury并不知道参数类型，在前面的示例中，rpc_handle_t类型就是这种情况。对于这些情况，可以使用另一个名为`MERCURY_GEN_STRUCT_PROC`的宏。它为现有的结构或类型定义了一个序列化函数-**假定该类型可以映射到已经存在的类型**。如果没有，用户可以创建自己的proc函数，并使用需要字节流的`hg_proc_raw`例程。
 
@@ -437,7 +463,7 @@ hg_proc_rpc_open_in_t(hg_proc_t proc, void *data)
 MERCURY_GEN_STRUCT_PROC(struct_type_name, fields)
 ```
 
-#### Example
+#### 5.2.1. Example
 
 以下函数具有一种非标准类型`rpc_handle_t`。
 
@@ -470,7 +496,7 @@ hg_proc_rpc_handle_t(hg_proc_t proc, void *data)
 }
 ```
 
-### 预定义类型
+### 5.3. 预定义类型
 
 Mercury使用标准类型，以便在序列化和反序列化时在平台之间固定类型的大小。为了方便起见，HG类型还可以用于序列化批量句柄，例如，还可以对字符串进行序列化。
 
@@ -485,7 +511,7 @@ Mercury使用标准类型，以便在序列化和反序列化时在平台之间�
 | `int64_t`     | `hg_const_string_t`                    |
 | `uint64_t`    | `hg_string_t`                          |
 
-### 注册RPC
+### 5.4. 注册RPC
 
 与前面的宏结合使用，下面的宏通过将类型映射到生成的proc函数，使RPC调用的注册更加方便。
 
@@ -494,7 +520,7 @@ MERCURY_REGISTER(hg_class, func_name, in_struct_type_name, out_struct_type_name,
                  rpc_cb);
 ```
 
-#### Example
+#### 5.4.1. Example
 
 ```c
 int rpc_open(const char *path, rpc_handle_t handle, int *event_id);
@@ -507,7 +533,7 @@ rpc_open_id_g = MERCURY_REGISTER(hg_class, "rpc_open", rpc_open_in_t,
                                  rpc_open_out_t, rpc_open_cb);
 ```
 
-## 其他参考
+## 6. 其他参考
 
 以下是更多高级主题和文档项目的列表：
 
