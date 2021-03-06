@@ -36,8 +36,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
+ * \file src/cart/crt_rpc.h
+ * 
  * This file is part of CaRT. It gives out the data types internally used by
  * CaRT and not in other specific header files.
+ * 
+ * 该文件是CaRT的一部分。它给出了CaRT内部使用的数据类型，并且不在其他特定头文件中。
  */
 
 #ifndef __CRT_RPC_H__
@@ -46,66 +50,72 @@
 #include <gurt/heap.h>
 #include "gurt/common.h"
 
-/* default RPC timeout 60 seconds */
+/** default RPC timeout 60 seconds */
 #define CRT_DEFAULT_TIMEOUT_S	(60) /* second */
-#define CRT_DEFAULT_TIMEOUT_US	(CRT_DEFAULT_TIMEOUT_S * 1e6) /* micro-second */
+#define CRT_DEFAULT_TIMEOUT_US	(CRT_DEFAULT_TIMEOUT_S * 1e6) /* micro-second 微妙us*/
 
-/* uri lookup max retry times */
+/** uri lookup max retry times */
 #define CRT_URI_LOOKUP_RETRY_MAX	(8)
 
+// struct d_binheap_ops是类型，crt_timeout_bh_ops是对象示例名
 extern struct d_binheap_ops crt_timeout_bh_ops;
 void crt_hdlr_rank_evict(crt_rpc_t *rpc_req);
 extern void crt_hdlr_memb_sample(crt_rpc_t *rpc_req);
 
-/* RPC flags, these are sent over the wire as part of the protocol so can
+/**
+ * RPC flags, these are sent over the wire as part of the protocol so can
  * be set at the origin and read by the target
  */
 enum crt_rpc_flags_internal {
-	/* flag of collective RPC (bcast) */
+	/** flag of collective RPC (bcast)集体rpc，广播 */
 	CRT_RPC_FLAG_COLL		= (1U << 16),
-	/* flag of targeting primary group */
+	/** flag of targeting primary group */
 	CRT_RPC_FLAG_PRIMARY_GRP	= (1U << 17),
 };
 
 struct crt_corpc_hdr {
-	/* internal group ID name */
+	/** internal group ID name */
 	d_string_t		 coh_grpid;
-	/* collective bulk handle */
+	/** collective bulk handle */
 	crt_bulk_t		 coh_bulk_hdl;
-	/* optional excluded or exclusive ranks */
+	/** optional excluded or exclusive ranks */
 	d_rank_list_t		*coh_filter_ranks;
-	/* optional inline ranks, for example piggyback the group members */
+	/** optional inline ranks, for example piggyback背着 the group members */
 	d_rank_list_t		*coh_inline_ranks;
-	/* group membership version */
+	/** group membership version */
 	uint32_t		 coh_grp_ver;
 	uint32_t		 coh_tree_topo;
-	/* root rank of the tree, it is the logical rank within the group */
+	/** root rank of the tree, it is the logical rank within the group */
 	uint32_t		 coh_root;
 	uint32_t		 coh_padding;
 };
 
-/* CaRT layer common header */
+/** CaRT layer common header */
 struct crt_common_hdr {
 	uint32_t	cch_opc;
-	/* RPC request flag, see enum crt_rpc_flags_internal */
+	/** RPC request flag, see enum crt_rpc_flags_internal */
 	uint32_t	cch_flags;
-	/* HLC timestamp */
+	/** HLC timestamp */
 	uint64_t	cch_hlc;
-	/* destination rank in default primary group */
+	/** destination rank in default primary group */
 	d_rank_t	cch_dst_rank;
-	/* originator rank in default primary group */
+	/** originator rank in default primary group 默认主要组中的发起者等级 */
 	d_rank_t	cch_src_rank;
-	/* tag to which rpc request was sent to */
+	/** tag to which rpc request was sent to */
 	uint32_t	cch_dst_tag;
-	/* Transfer id */
+	/** Transfer id */
 	uint32_t	cch_xid;
-	/* used in crp_reply_hdr to propagate rpc failure back to sender */
+	/** used in crp_reply_hdr to propagate rpc failure back to sender 将rpc失败传播回发件人*/
 	uint32_t	cch_rc;
 };
 
+/**
+ * @brief 描述RPC状态
+ * 
+ */
 typedef enum {
-	RPC_STATE_INITED = 0x36,
-	RPC_STATE_QUEUED, /* queued for flow controlling */
+	RPC_STATE_INITED = 0x36, /// 初始化
+	RPC_STATE_QUEUED, /** queued for flow controlling */
 	RPC_STATE_REQ_SENT,
 	RPC_STATE_REPLY_RECVED,
 	RPC_STATE_COMPLETED,
@@ -113,94 +123,100 @@ typedef enum {
 	RPC_STATE_TIMEOUT,
 	RPC_STATE_ADDR_LOOKUP,
 	RPC_STATE_URI_LOOKUP,
-	RPC_STATE_FWD_UNREACH,
+	RPC_STATE_FWD_UNREACH,  /// 转发未到达
 } crt_rpc_state_t;
 
-/* corpc info to track the tree topo and child RPCs info */
+/** corpc（集体rpc） info to track the tree topo and child RPCs info 跟踪树拓扑和子RPC信息 */
 struct crt_corpc_info {
-	struct crt_grp_priv	*co_grp_priv;
-	/* excluded or exclusive ranks */
+	struct crt_grp_priv	*co_grp_priv;  /// 组信息？
+	/** excluded or exclusive ranks */
 	d_rank_list_t		*co_filter_ranks;
 	uint32_t		 co_grp_ver;
 	uint32_t		 co_tree_topo;
 	d_rank_t		 co_root;
-	/* the priv passed in crt_corpc_req_create */
+	/** the priv passed in crt_corpc_req_create */
 	void			*co_priv;
-	/* child RPCs list */
+	/** child RPCs list */
 	d_list_t		 co_child_rpcs;
-	/*
+	/**
 	 * replied child RPC list, when a child RPC being replied and parent
 	 * RPC has not been locally handled, we can not aggregate the reply
 	 * as it possibly be over-written by local RPC handler. So when child
 	 * RPC being replied and parent RPC not finished, the child RPC is
 	 * queued at co_replied_rpcs.
+	 * 
+	 * 已答复的子RPC列表，当一个子RPC正在被答复且父RPC未在本地处理时，我们无法汇总答复，因为它可能被本地RPC处理程序覆盖。
+	 * 因此，当子RPC被答复而父RPC未完成时，子RPC将在co_replied_rpcs处排队。
 	 */
 	d_list_t		 co_replied_rpcs;
 	uint32_t		 co_child_num;
 	uint32_t		 co_child_ack_num;
 	uint32_t		 co_child_failed_num;
-	/*
+	/**
 	 * co_local_done is the flag of local RPC finish handling
 	 * (local reply ready).
+	 * co_local_done是本地RPC完成处理的标志（本地答复准备就绪）。
 	 */
 	uint32_t		 co_local_done:1,
-	/* co_root_excluded is the flag of root in excluded rank list */
+	/** co_root_excluded is the flag of root in excluded rank list 
+	 * co_root_excluded是排除等级列表中的根标志
+	 */
 				 co_root_excluded:1,
-	/* flag of if refcount taken for co_grp_priv */
+	/** flag of if refcount taken使用 for co_grp_priv */
 				 co_grp_ref_taken:1;
 	int			 co_rc;
 };
 
 struct crt_rpc_priv {
-	crt_rpc_t		crp_pub; /* public part */
-	/* link to crt_ep_inflight::epi_req_q/::epi_req_waitq */
+	crt_rpc_t		crp_pub; /** public part */
+	/** link to crt_ep_inflight::epi_req_q/::epi_req_waitq */
 	d_list_t		crp_epi_link;
-	/* tmp_link used in crt_context_req_untrack */
+	/** tmp_link used in crt_context_req_untrack */
 	d_list_t		crp_tmp_link;
-	/* link to parent RPC crp_opc_info->co_child_rpcs/co_replied_rpcs */
+	/** link to parent RPC crp_opc_info->co_child_rpcs/co_replied_rpcs */
 	d_list_t		crp_parent_link;
-	/* binheap node for timeout management, in crt_context::cc_bh_timeout */
+	/** binheap node for timeout management, in crt_context::cc_bh_timeout */
 	struct d_binheap_node	crp_timeout_bp_node;
-	/* the timeout in seconds set by user */
+	/** the timeout in seconds set by user */
 	uint32_t		crp_timeout_sec;
-	/* time stamp to be timeout, the key of timeout binheap */
+	/** time stamp to be timeout, the key of timeout binheap */
 	uint64_t		crp_timeout_ts;
 	crt_cb_t		crp_complete_cb;
-	void			*crp_arg; /* argument for crp_complete_cb */
-	struct crt_ep_inflight	*crp_epi; /* point back to inflight ep */
+	void			*crp_arg; /** argument for crp_complete_cb */
+	struct crt_ep_inflight	*crp_epi; /** point back to inflight ep */
 
-	crt_rpc_state_t		crp_state; /* RPC state */
-	hg_handle_t		crp_hg_hdl; /* HG request handle */
-	hg_addr_t		crp_hg_addr; /* target na address */
-	struct crt_hg_hdl	*crp_hdl_reuse; /* reused hg_hdl */
-	crt_phy_addr_t		crp_tgt_uri; /* target uri address */
-	crt_rpc_t		*crp_ul_req; /* uri lookup request */
-	uint32_t		crp_ul_retry; /* uri lookup retry counter */
+	crt_rpc_state_t		crp_state; /** RPC state */
+	hg_handle_t		crp_hg_hdl; /** HG request handle */
+	hg_addr_t		crp_hg_addr; /** target na address */
+	struct crt_hg_hdl	*crp_hdl_reuse; /** reused hg_hdl */
+	crt_phy_addr_t		crp_tgt_uri; /** target uri address */
+	crt_rpc_t		*crp_ul_req; /** uri lookup request */
+	uint32_t		crp_ul_retry; /** uri lookup retry counter */
 
-	struct crt_grp_priv	*crp_grp_priv; /* group private pointer */
-	/*
+	struct crt_grp_priv	*crp_grp_priv; /** group private pointer */
+	/**
 	 * RPC request flag, see enum crt_rpc_flags/crt_rpc_flags_internal,
 	 * match with crp_req_hdr.cch_flags.
 	 */
 	uint32_t		crp_flags;
-	uint32_t		crp_srv:1, /* flag of server received request */
+	uint32_t		crp_srv:1, /** flag of server received request */
 				crp_output_got:1,
 				crp_input_got:1,
-				/* flag of collective RPC request */
+				/** flag of collective RPC request 标识是否为 corpc？*/
 				crp_coll:1,
-				/* flag of crp_tgt_uri need to be freed */
+				/** flag of crp_tgt_uri need to be freed */
 				crp_uri_free:1,
-				/* flag of forwarded rpc for corpc */
+				/** flag of forwarded rpc for corpc */
 				crp_forward:1,
-				/* flag of in timeout binheap */
+				/** flag of in timeout binheap */
 				crp_in_binheap:1,
-				/* set if a call to crt_req_reply pending */
+				/** set if a call to crt_req_reply pending */
 				crp_reply_pending:1,
-				/* set to 1 if target ep is set */
+				/** set to 1 if target ep is set */
 				crp_have_ep:1,
-				/* RPC is tracked by the context */
+				/** RPC is tracked by the context */
 				crp_ctx_tracked:1,
-				/* 1 if RPC is succesfully put on the wire */
+				/** 1 if RPC is succesfully put on the wire */
 				crp_on_wire:1;
 	uint32_t		crp_refcount;
 	struct crt_opc_info	*crp_opc_info;
@@ -212,7 +228,8 @@ struct crt_rpc_priv {
 	struct crt_corpc_hdr	crp_coreq_hdr; /* collective request header */
 };
 
-/* LIST of internal RPCS in form of:
+/**
+ * LIST of internal RPCS in form of:
  * OPCODE, flags, FMT, handler, corpc_hdlr,
  */
 #define CRT_INTERNAL_RPCS_LIST						\
@@ -283,7 +300,9 @@ struct crt_rpc_priv {
 		0, &CQF_crt_ctl_fi_attr_set,				\
 		crt_hdlr_ctl_fi_attr_set, NULL)
 
-/* Define for RPC enum population below */
+/** Define for RPC enum population below 
+ * 定义下面的 RPC 枚举人口
+*/
 #define X(a, b, c, d, e) a
 
 /* CRT internal opcode definitions, must be 0xFF00xxxx.*/
@@ -301,15 +320,15 @@ enum {
 
 CRT_GEN_STRUCT(crt_grp_cache, CRT_SEQ_GRP_CACHE)
 
-#define CRT_ISEQ_URI_LOOKUP	/* input fields */		 \
+#define CRT_ISEQ_URI_LOOKUP	/** input fields */		 \
 	((crt_group_id_t)	(ul_grp_id)		CRT_VAR) \
 	((d_rank_t)		(ul_rank)		CRT_VAR) \
 	((uint32_t)		(ul_tag)		CRT_VAR)
 
-#define CRT_OSEQ_URI_LOOKUP	/* output fields */		 \
+#define CRT_OSEQ_URI_LOOKUP	/** output fields */		 \
 	((crt_phy_addr_t)	(ul_uri)		CRT_VAR) \
 	((int32_t)		(ul_rc)			CRT_VAR)
-
+// CRT_RPC_DEFINE(crt_uri_lookup, CRT_ISEQ_URI_LOOKUP, CRT_OSEQ_URI_LOOKUP)
 CRT_RPC_DECLARE(crt_uri_lookup, CRT_ISEQ_URI_LOOKUP, CRT_OSEQ_URI_LOOKUP)
 
 #define CRT_ISEQ_ST_SEND_ID	/* input fields */		 \
@@ -515,9 +534,13 @@ CRT_RPC_DECLARE(crt_ctl_fi_attr_set, CRT_ISEQ_CTL_FI_ATTR_SET,
 CRT_RPC_DECLARE(crt_ctl_fi_toggle,
 		CRT_ISEQ_CTL_FI_TOGGLE, CRT_OSEQ_CTL_FI_TOGGLE)
 
-/* Internal macros for crt_req_(add|dec)ref from within cart.  These take
+/**
+ * Internal macros for crt_req_(add|dec)ref from within cart.  These take
  * a crt_internal_rpc pointer and provide better logging than the public
  * functions however only work when a private pointer is held.
+ * 
+ * cart内crt_req_（add | dec）ref的内部宏。 它们使用crt_internal_rpc指针，
+ * 并且比公共函数提供更好的日志记录，但是仅在持有私有指针时才起作用。
  */
 #define RPC_ADDREF(RPC) do {						\
 		int __ref;						\

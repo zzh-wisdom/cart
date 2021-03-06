@@ -22,3 +22,8 @@ pylint.log
 tags
 *.code-workspace
 utils/rpms/_topdir/
+
+html
+latex
+.vscode
+

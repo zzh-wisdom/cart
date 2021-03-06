@@ -36,11 +36,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * This file is part of CaRT. It implements the main RPC routines.
+ * 此文件是 CART 的一部分。它实现了主要的 RPC 程序。
  */
 #define D_LOGFAC	DD_FAC(rpc)
 
 #include "crt_internal.h"
 
+/**
+ * @brief 这个是啥功能的处理函数？
+ * 
+ * fault inject 是否启动
+ * 
+ * @param rpc_req 
+ */
 void
 crt_hdlr_ctl_fi_toggle(crt_rpc_t *rpc_req)
 {
@@ -52,7 +60,7 @@ crt_hdlr_ctl_fi_toggle(crt_rpc_t *rpc_req)
 	out_args = crt_reply_get(rpc_req);
 
 	if (in_args->op)
-		rc = d_fault_inject_enable();
+		rc = d_fault_inject_enable();  // 启用错误注入
 	else
 		rc = d_fault_inject_disable();
 
@@ -62,6 +70,13 @@ crt_hdlr_ctl_fi_toggle(crt_rpc_t *rpc_req)
 		D_ERROR("crt_reply_send() failed. rc: %d\n", rc);
 }
 
+/**
+ * @brief crt_hdlr_ctl_fi_attr_set
+ * 
+ * 设置 fault inject 的属性
+ * 
+ * @param rpc_req 
+ */
 void
 crt_hdlr_ctl_fi_attr_set(crt_rpc_t *rpc_req)
 {

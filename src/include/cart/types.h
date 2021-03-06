@@ -191,10 +191,16 @@ typedef struct crt_rpc {
 } crt_rpc_t;
 
 /** Abstraction pack/unpack processor */
-typedef void *crt_proc_t;
-/** Proc callback for pack/unpack parameters */
+typedef void *crt_proc_t;  /// 实际上会被强制类型转化为mercury中的*hg_proc类型，里面有操作类型op
+/** Proc callback for pack/unpack parameters 编解码参数的回调函数*/
 typedef int (*crt_proc_cb_t)(crt_proc_t proc, void *data);
 
+/**
+ * @brief CQF，处理请求的输入输出格式
+ * 
+ * 封装了用于编解码调用输入和输出的回调函数
+ * 
+ */
 struct crt_req_format {
 	crt_proc_cb_t		crf_proc_in;
 	crt_proc_cb_t		crf_proc_out;

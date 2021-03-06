@@ -36,8 +36,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /**
+ * \file src/cart/crt_internal.h
+ * 
  * This file is part of CaRT. It it the common header file which be included by
  * all other .c files of CaRT.
+ * 
+ * 此文件是 CART 的一部分。它是其他.c文件include的公用头文件。
  */
 
 #ifndef __CRT_INTERNAL_H__
@@ -59,7 +63,14 @@
 #include "crt_ctl.h"
 #include "crt_swim.h"
 
-/* A wrapper around D_TRACE_DEBUG that ensures the ptr option is a RPC */
+/**
+ * @brief RPC_TRACE RPC跟踪
+ * 
+ * A wrapper around D_TRACE_DEBUG that ensures the ptr option is a RPC
+ * 
+ * 围绕D_TRACE_DEBUG的包装，需要确保ptr选项为RPC
+ * 
+ */
 #define RPC_TRACE(mask, rpc, fmt, ...)					\
 	do {								\
 		D_TRACE_DEBUG(mask, (rpc),				\
@@ -72,6 +83,12 @@
 	} while (0)
 
 /* Log an error with a RPC descriptor */
+/**
+ * @brief RPC_ERROR RPC报错
+ * 
+ * 使用 RPC 描述符记录错误
+ * 
+ */
 #define RPC_ERROR(rpc, fmt, ...)					\
 	do {								\
 		D_TRACE_ERROR((rpc),					\

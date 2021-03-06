@@ -370,7 +370,7 @@ int
 crt_reply_send(crt_rpc_t *req);
 
 /**
- * Return request buffer
+ * Return request buffer，获取请求的输入buffer（参数，句柄等）
  *
  * \param[in] req              pointer to RPC request
  *
@@ -419,7 +419,7 @@ int
 crt_req_dst_tag_get(crt_rpc_t *req, uint32_t *tag);
 
 /**
- * Return reply buffer
+ * Return reply buffer，存储返回值
  *
  * \param[in] req              pointer to RPC request
  *
@@ -558,10 +558,11 @@ crt_ep_abort(crt_endpoint_t *ep);
 #define CRT_ARRAY 2
 #define CRT_RAW   3
 
-#define CRT_GEN_GET_TYPE(seq) BOOST_PP_SEQ_HEAD(seq)
-#define CRT_GEN_GET_NAME(seq) BOOST_PP_SEQ_ELEM(1, seq)
-#define CRT_GEN_GET_KIND(seq) BOOST_PP_SEQ_TAIL(BOOST_PP_SEQ_TAIL(seq))
+#define CRT_GEN_GET_TYPE(seq) BOOST_PP_SEQ_HEAD(seq) /// 分离第一个字段，即类型
+#define CRT_GEN_GET_NAME(seq) BOOST_PP_SEQ_ELEM(1, seq)  /// 分离表达式的第2（1+1）个元素，即字段名
+#define CRT_GEN_GET_KIND(seq) BOOST_PP_SEQ_TAIL(BOOST_PP_SEQ_TAIL(seq))  /// 分离最后一个字段，种类
 
+/// 定义结构体类型的单个字段
 #define CRT_GEN_STRUCT_FIELD(r, data, seq)				\
 	BOOST_PP_IF(BOOST_PP_EQUAL(CRT_ARRAY, CRT_GEN_GET_KIND(seq)),	\
 		struct {						\
@@ -572,6 +573,7 @@ crt_ep_abort(crt_endpoint_t *ep);
 	BOOST_PP_IF(BOOST_PP_EQUAL(CRT_PTR, CRT_GEN_GET_KIND(seq)),	\
 		*CRT_GEN_GET_NAME(seq), CRT_GEN_GET_NAME(seq));
 
+/// 根据seq定义名为struct_type_name的结构体类型
 #define CRT_GEN_STRUCT(struct_type_name, seq)				\
 	struct struct_type_name {					\
 		BOOST_PP_SEQ_FOR_EACH(CRT_GEN_STRUCT_FIELD, , seq)	\
@@ -582,9 +584,19 @@ crt_ep_abort(crt_endpoint_t *ep);
 	crt_proc_struct_,
 
 #define CRT_GEN_X(x) x
-#define CRT_GEN_X2(x) CRT_GEN_X BOOST_PP_LPAREN() crt_proc_##x BOOST_PP_RPAREN()
+#define CRT_GEN_X2(x) CRT_GEN_X BOOST_PP_LPAREN() crt_proc_##x BOOST_PP_RPAREN() /// 分别为左右括号
+/**
+ * ( crt_proc_ ) （ 类型 ）
+ * 
+ */
 #define CRT_GEN_GET_FUNC(seq) CRT_GEN_X2 BOOST_PP_SEQ_FIRST_N(1, seq)
 
+/**
+ * @brief 为结构体的单个字段进行编解码和释放内存的操作
+ * 
+ * \todo 具体过程还得仔细研究，为啥结构体的各个字段必定有ca_count和ca_arrays，不，结构体的定义部分还得好好研究
+ * 
+ */
 #define CRT_GEN_PROC_FIELD(r, ptr, seq)					\
 	BOOST_PP_IF(BOOST_PP_EQUAL(CRT_ARRAY, CRT_GEN_GET_KIND(seq)),	\
 	{								\
@@ -614,7 +626,7 @@ crt_ep_abort(crt_endpoint_t *ep);
 		}							\
 		/* process the elements of array */			\
 		for (i = 0; i < count; i++) {				\
-			rc = CRT_GEN_GET_FUNC(seq)(proc, &e_ptr[i]);	\
+			rc = CRT_GEN_GET_FUNC(seq)(proc, &e_ptr[i]); /* 使用自带的函数编解码*/	\
 			if (rc)						\
 				D_GOTO(out, rc);			\
 		}							\
@@ -627,11 +639,19 @@ crt_ep_abort(crt_endpoint_t *ep);
 			     sizeof(CRT_GEN_GET_TYPE(seq)));		\
 	if (rc)								\
 		D_GOTO(out, rc);,					\
-	rc = CRT_GEN_GET_FUNC(seq)(proc, &ptr->CRT_GEN_GET_NAME(seq));	\
+	rc = CRT_GEN_GET_FUNC(seq)(proc, &ptr->CRT_GEN_GET_NAME(seq)); /* 使用自带的函数编解码*/	\ 
 	if (rc)								\
 		D_GOTO(out, rc);					\
 	))
 
+/**
+ * @brief 为特定结构体类型type_name生成对应的编码函数？
+ * 
+ * type_name一般为[rpc_name]_in
+ * 
+ * 生成的函数名为：crt_proc_struct_[rpc_name]_in
+ * 
+ */
 #define CRT_GEN_PROC_FUNC(type_name, seq)				\
 	static int crt_proc_struct_##type_name(crt_proc_t proc,		\
 					       struct type_name *ptr) {	\
@@ -643,6 +663,16 @@ crt_ep_abort(crt_endpoint_t *ep);
 		return rc;						\
 	}
 
+/**
+ * @brief 声明一个RPC调用所需的数据类型
+ * 
+ * 例如RPC调用名为get，则输入输出类型为
+ * struct get_in
+ * struct get_out
+ * 
+ * 另外还有一个处理输入输出编解码的回调函数封装类实例：
+ * struct crt_req_format CQF_get;
+ */
 #define CRT_RPC_DECLARE(rpc_name, fields_in, fields_out)		\
 	BOOST_PP_IF(BOOST_PP_SEQ_SIZE(fields_in),			\
 		CRT_GEN_STRUCT(rpc_name##_in, fields_in), )		\
@@ -658,6 +688,20 @@ crt_ep_abort(crt_endpoint_t *ep);
 #define CRT_DISABLE_SIZEOF_POINTER_DIV
 #endif /* warning is available */
 
+/**
+ * @brief 定义rpc调用
+ * 
+ * fields_in和fields_out都带括号的字段描述。例如：
+ * ((hg_const_string_t)(path))
+ * ((rpc_handle_t)(handle)) )
+ * 
+ * rpc调用的函数名为[rpc_name]
+ * 该rpc调用的输入和输出类型分别为：
+ * - [rpc_name]_in
+ * - [rpc_name]_out
+ * 
+ * CRT_RPC_DEFINE(crt_uri_lookup, CRT_ISEQ_URI_LOOKUP, CRT_OSEQ_URI_LOOKUP)
+ */
 #define CRT_RPC_DEFINE(rpc_name, fields_in, fields_out)			\
 	BOOST_PP_IF(BOOST_PP_SEQ_SIZE(fields_in),			\
 		CRT_GEN_PROC_FUNC(rpc_name##_in, fields_in), )		\

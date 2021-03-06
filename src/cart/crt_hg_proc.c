@@ -80,6 +80,16 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 编/解码，free则不做任何事情
+ * 
+ * 所谓的编解码就是memcpy而已，然后方向有所不同
+ * 
+ * @param proc 
+ * @param data 
+ * @param data_size 
+ * @return int 
+ */
 int
 crt_proc_memcpy(crt_proc_t proc, void *data, size_t data_size)
 {
