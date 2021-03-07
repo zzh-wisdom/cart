@@ -1924,7 +1924,10 @@ exit:
 	}
 }
 
-/* Results aggregate function for sync CORPC */
+/** 
+ * Results aggregate function for sync CORPC
+ * 同步 CORPC 的结果聚合函数
+ */
 int
 crt_iv_sync_corpc_aggregate(crt_rpc_t *source, crt_rpc_t *result, void *arg)
 {

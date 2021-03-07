@@ -1018,6 +1018,7 @@ crt_tree_topo(enum crt_tree_type tree_type, uint32_t branch_ratio)
 struct crt_corpc_ops {
 	/**
 	 * collective RPC reply aggregating callback.
+	 * 集体RPC回复的聚合回调。
 	 *
 	 * \param[in] source		the rpc structure of aggregating source
 	 * \param[in] result		the rpc structure of aggregating result
@@ -1035,6 +1036,8 @@ struct crt_corpc_ops {
 	 * Collective RPC pre-forward callback.
 	 * This is an optional callback. If specified, it will execute prior
 	 * to corpc request being forwarded.
+	 * 
+	 * 这是一个可选的回调。 如果指定，它将在转发forward corpc请求之前执行。
 	 *
 	 * \param[in] rpc		the rpc structure
 	 * \param[in] arg		the private pointer, valid only on
@@ -1051,6 +1054,8 @@ struct crt_corpc_ops {
 	 * Collective RPC post-reply callback.
 	 * This is an optional callback. If specified, it will execute after
 	 * reply is sent to parent (after co_aggregate executes).
+	 * 
+	 * 这是一个可选的回调。 如果指定，它将在回复发送给父对象后执行（在co_aggregate执行之后）。
 	 *
 	 * \param[in] rpc		the rpc structure of the parent
 	 * \param[in] arg		the private pointer, valid only on

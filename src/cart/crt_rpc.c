@@ -109,7 +109,7 @@ crt_hdlr_ctl_fi_attr_set(crt_rpc_t *rpc_req)
 /* uri lookup */
 CRT_RPC_DEFINE(crt_uri_lookup, CRT_ISEQ_URI_LOOKUP, CRT_OSEQ_URI_LOOKUP)
 
-/* for self-test service */
+/** for self-test（st） service */
 CRT_RPC_DEFINE(crt_st_send_id_reply_iov,
 		CRT_ISEQ_ST_SEND_ID, CRT_OSEQ_ST_REPLY_IOV)
 
@@ -152,9 +152,15 @@ static struct crt_corpc_ops crt_iv_sync_co_ops = {
 
 CRT_GEN_PROC_FUNC(crt_grp_cache, CRT_SEQ_GRP_CACHE);
 
-/* !! All of the following 4 RPC definition should have the same input fields !!
+/**
+ * !! All of the following 4 RPC definition should have the same input fields !!
  * All of them are verified in one function:
  * int verify_ctl_in_args(struct crt_ctl_ep_ls_in *in_args)
+ * 
+ * !! 以下所有4个RPC定义应具有相同的输入字段 !!
+ * 所有这些都以一个函数进行验证：
+ * int verify_ctl_in_args(struct crt_ctl_ep_ls_in *in_args)
+ * 
  */
 CRT_RPC_DEFINE(crt_ctl_get_uri_cache, CRT_ISEQ_CTL, CRT_OSEQ_CTL_GET_URI_CACHE)
 CRT_RPC_DEFINE(crt_ctl_ep_ls,         CRT_ISEQ_CTL, CRT_OSEQ_CTL_EP_LS)
@@ -169,8 +175,11 @@ CRT_RPC_DEFINE(crt_ctl_fi_toggle,
 	       CRT_ISEQ_CTL_FI_TOGGLE,
 	       CRT_OSEQ_CTL_FI_TOGGLE)
 
-/* Define for crt_internal_rpcs[] array population below.
+/**
+ * Define for crt_internal_rpcs[] array population below.
  * See CRT_INTERNAL_RPCS_LIST macro definition
+ * 
+ * 在下面为crt_internal_rpcs[]数组的填充定义。 请参阅CRT_INTERNAL_RPCS_LIST宏定义
  */
 #define X(a, b, c, d, e)	\
 {				\
@@ -180,13 +189,23 @@ CRT_RPC_DEFINE(crt_ctl_fi_toggle,
 	.prf_co_ops = e,	\
 }
 
+/**
+ * @brief internal-proto 协议的所有RPC成员
+ * 
+ */
 static struct crt_proto_rpc_format crt_internal_rpcs[] = {
 	CRT_INTERNAL_RPCS_LIST,
 };
 
 #undef X
 
-/* CRT RPC related APIs or internal functions */
+/* CRT RPC related APIs or internal functions 相关API或功能*/
+
+/**
+ * @brief 内部rpc注册
+ * 
+ * @return int 
+ */
 int
 crt_internal_rpc_register(void)
 {

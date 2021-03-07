@@ -125,8 +125,8 @@ struct crt_hg_context {
 
 /** HG level global data */
 struct crt_hg_gdata {
-	na_class_t		*chg_nacla; /* NA class */
-	hg_class_t		*chg_hgcla; /* HG class */
+	na_class_t		*chg_nacla; /** NA class */
+	hg_class_t		*chg_hgcla; /** HG class */
 };
 
 /* addr lookup completion callback */

@@ -56,49 +56,54 @@
 struct crt_hg_gdata;
 struct crt_grp_gdata;
 
-/* CaRT global data */
+/** CaRT global data 全局数据*/
 struct crt_gdata {
-	crt_phy_addr_t		cg_addr;
+	crt_phy_addr_t		cg_addr; /// 物理地址字符串
 
-	bool			cg_server;
-	/*
+	bool			cg_server;  /// 是否为服务器？
+	/**
 	 * share NA addr flag, true means all contexts share one NA class, fasle
 	 * means each context has its own NA class.  Each NA class has an
 	 * independent listening address.
+	 * 
+	 * 共享NA addr标志，为true表示所有上下文共享一个NA类，fasle表示每个上下文都有其自己的NA类。 
+	 * 每个NA类都有一个独立的侦听地址。
 	 */
 	bool			cg_share_na;
-	int			cg_na_plugin; /* NA plugin type */
+	int			cg_na_plugin; /** NA plugin type 即底层使用的网络类型吧*/
 
-	/* global timeout value (second) for all RPCs */
+	/** global timeout value (second) for all RPCs */
 	uint32_t		cg_timeout;
-	/* credits limitation for #inflight RPCs per target EP CTX */
+	/** credits limitation for #inflight RPCs per target EP CTX 
+	 * 每个目标EP CTX的#inflight RPC的信用额度限制
+	*/
 	uint32_t		cg_credit_ep_ctx;
 
-	/* CaRT contexts list */
+	/** CaRT contexts list */
 	d_list_t		cg_ctx_list;
-	/* actual number of items in CaRT contexts list */
+	/** actual number of items in CaRT contexts list */
 	int			cg_ctx_num;
-	/* maximum number of contexts user wants to create */
+	/** maximum number of contexts user wants to create */
 	uint32_t		cg_ctx_max_num;
-	/* the global opcode map */
+	/** the global opcode map，一个三维数组*/
 	struct crt_opc_map	*cg_opc_map;
-	/* HG level global data */
+	/*# HG level global data */
 	struct crt_hg_gdata	*cg_hg;
 
 	struct crt_grp_gdata	*cg_grp;
 
-	/* refcount to protect crt_init/crt_finalize */
+	/** refcount to protect crt_init/crt_finalize */
 	volatile unsigned int	cg_refcount;
 
-	/* flags to keep track of states */
+	/** flags to keep track of states */
 	volatile unsigned int	cg_inited		: 1,
 				cg_grp_inited		: 1,
 				cg_swim_inited		: 1,
 				cg_auto_swim_disable	: 1;
 
-	ATOMIC uint32_t		cg_xid; /* transfer id for rpcs */
+	ATOMIC uint32_t		cg_xid; /** transfer id for rpcs RPC的传输ID */
 
-	/* protects crt_gdata */
+	/** protects crt_gdata */
 	pthread_rwlock_t	cg_rwlock;
 };
 
@@ -207,56 +212,60 @@ struct crt_ep_inflight {
 #define CRT_OPC_MAP_BITS	8
 #define CRT_OPC_MAP_BITS_LEGACY	12
 
-/* highest protocol version allowed */
+/** highest protocol version allowed */
 #define CRT_PROTO_MAX_VER	(0xFFUL)
-/* max member RPC count allowed in one protocol  */
+/** max member RPC count allowed in one protocol  */
 #define CRT_PROTO_MAX_COUNT	(0xFFFFUL)
-#define CRT_PROTO_BASEOPC_MASK	(0xFF000000UL)
+#define CRT_PROTO_BASEOPC_MASK	(0xFF000000UL)  /// opcode的基础base部分的掩码
 #define CRT_PROTO_VER_MASK	(0x00FF0000UL)
 #define CRT_PROTO_COUNT_MASK	(0x0000FFFFUL)
 
+/**
+ * @brief opcode信息
+ * 
+ */
 struct crt_opc_info {
 	d_list_t		 coi_link;
-	crt_opcode_t		 coi_opc;
-	unsigned int		 coi_inited:1,
-				 coi_proc_init:1,
-				 coi_rpccb_init:1,
-				 coi_coops_init:1,
-				 coi_no_reply:1, /* flag of one-way RPC */
-				 coi_queue_front:1, /* add to front of queue */
-				 coi_reset_timer:1; /* reset timer on timeout */
+	crt_opcode_t		 coi_opc;   /// opcode
+	unsigned int		 coi_inited:1,  /// 标识当前的crt_opc_info结构体是否被初始化
+				 coi_proc_init:1,   /// 处理函数已初始化，即coi_crf
+				 coi_rpccb_init:1,  /// 标识coi_rpc_cb是否初始化
+				 coi_coops_init:1,  ///  标识coi_co_ops是否被初始化
+				 coi_no_reply:1, /** flag of one-way RPC */
+				 coi_queue_front:1, /** add to front of queue */
+				 coi_reset_timer:1; /** reset timer on timeout */
 
-	crt_rpc_cb_t		 coi_rpc_cb;
-	struct crt_corpc_ops	*coi_co_ops;
+	crt_rpc_cb_t		 coi_rpc_cb;  /// 服务器端的RPC处理函数handler
+	struct crt_corpc_ops	*coi_co_ops;  /// 各种回调函数的聚合
 
 	/* Sizes/offset used when buffers are part of the same allocation
 	 * as the rpc descriptor.
 	 */
-	size_t			 coi_rpc_size;
-	off_t			 coi_input_offset;
-	off_t			 coi_output_offset;
-	struct crt_req_format	*coi_crf;
+	size_t			 coi_rpc_size;  /// 该rpc编码后的大小，元信息+输出+输入
+	off_t			 coi_input_offset;  /// 输入在buffer中的起始偏移
+	off_t			 coi_output_offset; /// 输出在buffer中的起始偏移
+	struct crt_req_format	*coi_crf;   /// 输入输出编解码
 };
 
-/* opcode map (three-level array) */
+/** opcode map (three-level array) */
 struct crt_opc_map_L3 {
 	unsigned int		 L3_num_slots_total;
-	unsigned int		 L3_num_slots_used;
+	unsigned int		 L3_num_slots_used;  /// 这个好像没用到？
 	struct crt_opc_info	*L3_map;
 };
 
 struct crt_opc_map_L2 {
-	unsigned int		 L2_num_slots_total;
-	unsigned int		 L2_num_slots_used;
+	unsigned int		 L2_num_slots_total;  /// 数组L2_map的大小
+	unsigned int		 L2_num_slots_used;  /// 数组L2_map被使用的元素个数
 	struct crt_opc_map_L3	*L2_map;
 };
 
 struct crt_opc_map {
-	pthread_rwlock_t	 com_rwlock;
+	pthread_rwlock_t	 com_rwlock;  /// 整个结构体的读写锁
 	unsigned int		 com_lock_init:1;
 	unsigned int		 com_pid;
 	unsigned int		 com_bits;
-	unsigned int		 com_num_slots_total;
+	unsigned int		 com_num_slots_total;  /// com_map的元素个数
 	struct crt_opc_map_L2	*com_map;
 };
 

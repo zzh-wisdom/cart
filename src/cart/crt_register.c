@@ -244,6 +244,19 @@ out:
 	return info;
 }
 
+/**
+ * @brief 使用传入的数据填充初始化）opc_info（crt_opc_info）
+ * 
+ * 要求opc_info未被初始化，否则报错
+ * 
+ * @param opc_info 
+ * @param opc 
+ * @param flags 
+ * @param crf 
+ * @param rpc_cb 
+ * @param co_ops 
+ * @return int 
+ */
 static int
 crt_opc_reg(struct crt_opc_info *opc_info, crt_opcode_t opc, uint32_t flags,
 	    struct crt_req_format *crf, crt_rpc_cb_t rpc_cb,
@@ -253,7 +266,7 @@ crt_opc_reg(struct crt_opc_info *opc_info, crt_opcode_t opc, uint32_t flags,
 	size_t	size_out = 0;
 	int	rc = 0;
 
-	if (opc_info->coi_inited == 1) {
+	if (opc_info->coi_inited == 1) { //
 		D_ERROR("RPC with opcode 0x%x already registered\n",
 			opc_info->coi_opc);
 		D_GOTO(out, rc = -DER_EXIST);
@@ -277,11 +290,13 @@ crt_opc_reg(struct crt_opc_info *opc_info, crt_opcode_t opc, uint32_t flags,
 
 	opc_info->coi_inited = 1;
 
-	/* Calculate the size required for the RPC.
+	/* Calculate the size required for the RPC. 计算RPC的大小
 	 *
 	 * If crp_forward is enabled memory is only allocated for output buffer,
 	 * not input so put the output buffer first and allocate input_offset
 	 * bytes only if forward is set.
+	 * 
+	 * 先是rpc的主要信息（struct crt_rpc_priv），然后是输出、输入
 	 */
 	opc_info->coi_output_offset = D_ALIGNUP(sizeof(struct crt_rpc_priv),
 						64);
@@ -306,7 +321,17 @@ out:
 	return rc;
 }
 
-
+/**
+ * @brief 根据opc和prf填充opc_info
+ * 
+ * 1. 格式判断处理
+ * 2. 调用crt_opc_reg进行实际的填充
+ * 
+ * @param opc_info 
+ * @param opc 
+ * @param prf 
+ * @return int 
+ */
 static int
 crt_opc_reg_internal(struct crt_opc_info *opc_info, crt_opcode_t opc,
 		struct crt_proto_rpc_format *prf)
@@ -352,6 +377,17 @@ validate_base_opcode(crt_opcode_t base_opc)
 	return true;
 }
 
+/**
+ * @brief 注册opcode map的第三维数组
+ * 
+ * 第三维数组使用特定于proto种类的序号（cpf_count），即opcode的最低16个bit位作为索引下标，实际为cpf_count-1
+ * 
+ * 数组空间自动申请
+ * 
+ * @param map 
+ * @param cpf 
+ * @return int 
+ */
 static int
 crt_proto_reg_L3(struct crt_opc_map_L3 *L3_map,
 		 struct crt_proto_format *cpf)
@@ -395,6 +431,17 @@ crt_proto_reg_L3(struct crt_opc_map_L3 *L3_map,
 	return rc;
 }
 
+/**
+ * @brief Get the L3 map object，根据cpf->cpf_ver，版本号
+ * 
+ * 版本号cpf->cpf_ver作为第二维数组的下标。
+ * 
+ * 如果空间不够会自动额外申请，将数组的空间扩展到cpf->cpf_ver+1的大小
+ * 
+ * @param L2_map 
+ * @param cpf 
+ * @return struct crt_opc_map_L3* 
+ */
 static struct crt_opc_map_L3 *
 get_L3_map(struct crt_opc_map_L2 *L2_map, struct crt_proto_format *cpf)
 {
@@ -408,13 +455,22 @@ get_L3_map(struct crt_opc_map_L2 *L2_map, struct crt_proto_format *cpf)
 		}
 		memset(&new_map[L2_map->L2_num_slots_total], 0,
 		       (cpf->cpf_ver + 1 - L2_map->L2_num_slots_total)
-		       *sizeof(struct crt_opc_map_L3));
+		       *sizeof(struct crt_opc_map_L3)); // 把新申请的空间全置为0
 		L2_map->L2_map = new_map;
 		L2_map->L2_num_slots_total = cpf->cpf_ver + 1;
 	}
 	return &L2_map->L2_map[cpf->cpf_ver];
 }
 
+/**
+ * @brief 注册opcode map的第二维数组
+ * 
+ * 第二维数组使用版本号作为索引下标
+ * 
+ * @param map 
+ * @param cpf 
+ * @return int 
+ */
 static int
 crt_proto_reg_L2(struct crt_opc_map_L2 *L2_map,
 		 struct crt_proto_format *cpf)
@@ -440,7 +496,17 @@ crt_proto_reg_L2(struct crt_opc_map_L2 *L2_map,
 	return rc;
 }
 
-
+/**
+ * @brief 注册opcode map的第一维数组
+ * 
+ * 第一维数组使用base，即opcode的最高8位为索引下标
+ * 
+ * \todo 第一维数组已经分配好的？
+ * 
+ * @param map 
+ * @param cpf 
+ * @return int 
+ */
 static int
 crt_proto_reg_L1(struct crt_opc_map *map, struct crt_proto_format *cpf)
 {
@@ -450,11 +516,11 @@ crt_proto_reg_L1(struct crt_opc_map *map, struct crt_proto_format *cpf)
 
 	D_ASSERT(map != NULL);
 
-	index = cpf->cpf_base >> 24;
+	index = cpf->cpf_base >> 24;  // 取高十六bit位
 	D_ASSERT(index >= 0 && index < map->com_num_slots_total);
 
 	D_RWLOCK_WRLOCK(&map->com_rwlock);
-	L2_map = &map->com_map[index];
+	L2_map = &map->com_map[index]; // 已经分配好？
 	D_ASSERT(L2_map != NULL);
 
 	rc = crt_proto_reg_L2(L2_map, cpf);
@@ -465,6 +531,12 @@ crt_proto_reg_L1(struct crt_opc_map *map, struct crt_proto_format *cpf)
 	return rc;
 }
 
+/**
+ * @brief 普通协议proto的注册
+ * 
+ * @param cpf 
+ * @return int 
+ */
 static int
 crt_proto_register_common(struct crt_proto_format *cpf)
 {
@@ -524,6 +596,12 @@ crt_proto_register(struct crt_proto_format *cpf)
 	return crt_proto_register_common(cpf);
 }
 
+/**
+ * @brief 内部协议proto(crt_proto_format)注册
+ * 
+ * @param cpf 
+ * @return int 
+ */
 int
 crt_proto_register_internal(struct crt_proto_format *cpf)
 {
@@ -533,7 +611,7 @@ crt_proto_register_internal(struct crt_proto_format *cpf)
 	}
 
 	/* validate base_opc is in range */
-	if (cpf->cpf_base ^ CRT_PROTO_BASEOPC_MASK) {
+	if (cpf->cpf_base ^ CRT_PROTO_BASEOPC_MASK) {  // 这里不用cpf->cpf_base == CRT_PROTO_BASEOPC_MASK来判断，异或运算提高效率
 		D_ERROR("Invalid base_opc: %#x.\n", cpf->cpf_base);
 		return -DER_INVAL;
 	}

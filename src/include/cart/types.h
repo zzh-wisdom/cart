@@ -142,6 +142,9 @@ typedef d_string_t crt_phy_addr_t;
  * are reserved for internal usage, such as group maintenance etc. If user
  * defines its RPC using those reserved opcode, then undefined result is
  * expected.
+ * 
+ * RPC由操作码标识。 所有保留最高16位全为1的操作码供内部使用，例如组维护等。
+ * 如果用户使用这些保留的操作码定义其RPC，则预期会产生不确定的结果。
  */
 typedef uint32_t crt_opcode_t;
 #define CRT_OPC_INTERNAL_BASE	0xFF000000UL
@@ -177,7 +180,7 @@ enum crt_rpc_flags {
 
 struct crt_rpc;
 
-/** Public RPC request/reply, exports to user */
+/** Public RPC request/reply, exports to user 相当于一个rpc实例？*/
 typedef struct crt_rpc {
 	crt_context_t		cr_ctx; /**< CRT context of the RPC */
 	crt_endpoint_t		cr_ep; /**< endpoint ID */
@@ -202,16 +205,20 @@ typedef int (*crt_proc_cb_t)(crt_proc_t proc, void *data);
  * 
  */
 struct crt_req_format {
-	crt_proc_cb_t		crf_proc_in;
-	crt_proc_cb_t		crf_proc_out;
-	const size_t		crf_size_in;
-	const size_t		crf_size_out;
+	crt_proc_cb_t		crf_proc_in;  /// 输入编解码方法
+	crt_proc_cb_t		crf_proc_out; /// 输出编解码方法
+	const size_t		crf_size_in;  /// 输入大小
+	const size_t		crf_size_out; /// 输出大小
 };
 
 /** server-side RPC handler */
 typedef void (*crt_rpc_cb_t)(crt_rpc_t *rpc);
 
-/** specifies a member RPC of a protocol. */
+/** specifies a member RPC of a protocol.
+ * 指定协议的 RPC 成员。
+ * 
+ * 该结构体包含一个rpc的具体处理方法和输入输出编解码方法
+ */
 struct crt_proto_rpc_format {
 	/** the input/output format of the member RPC */
 	struct crt_req_format	*prf_req_fmt;
@@ -226,12 +233,15 @@ struct crt_proto_rpc_format {
 	uint32_t		 prf_flags;
 };
 
-/** specify an RPC protocol */
+/** 
+ * specify an RPC protocol
+ * 指定 RPC 协议（编解码的协议？）
+ */
 struct crt_proto_format {
-	const char			*cpf_name;
-	uint32_t			 cpf_ver;
+	const char			*cpf_name;  /// 名字
+	uint32_t			 cpf_ver;  /// 版本
 	/** number of RPCs in this protocol, i.e. number of entries in
-	 * cpf_prf
+	 * cpf_prf 此协议中RPC的数量，即cpf_prf中的条目数
 	 */
 	uint32_t			 cpf_count;
 	/** Array of RPC definitions */
@@ -244,6 +254,8 @@ struct crt_proto_format {
 /**
  * given the base opcode, version of a protocol, and a member RPC index, compute
  * the RPC opcode of that member RPC
+ * 
+ * 给定base opcode，协议版本号和成员RPC索引号，计算该成员RPC的RPC opcode
  */
 #define CRT_PROTO_OPC(base_opc, version, rpc_index)			\
 	((uint32_t)(base_opc) |						\

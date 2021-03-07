@@ -265,11 +265,11 @@ struct crt_lookup_item {
 };
 
 
-/* structure of global group data */
+/** structure of global group data */
 struct crt_grp_gdata {
 	struct crt_grp_priv	*gg_primary_grp;
 
-	/* rwlock to protect above fields */
+	/** rwlock to protect above fields */
 	pthread_rwlock_t	 gg_rwlock;
 };
 

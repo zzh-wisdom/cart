@@ -334,6 +334,10 @@ void d_getenv_int(const char *env, unsigned int *int_val);
 # define offsetof(typ, memb)	((long)((char *)&(((typ *)0)->memb)))
 #endif
 
+/**
+ * @brief 将x扩大到按照a对齐
+ * 
+ */
 #define D_ALIGNUP(x, a) (((x) + (a - 1)) & ~(a - 1))
 
 #ifndef ARRAY_SIZE
