@@ -225,6 +225,16 @@ crt_internal_rpc_register(void)
 	return rc;
 }
 
+/**
+ * @brief 分配rpc私有信息(描述符），priv_allocated带回
+ * 
+ * \todo forward 的具体含义
+ * 
+ * @param opc 
+ * @param[out] priv_allocated 
+ * @param forward 为true则不分配input缓冲区
+ * @return int 
+ */
 int
 crt_rpc_priv_alloc(crt_opcode_t opc, struct crt_rpc_priv **priv_allocated,
 		   bool forward)
@@ -241,6 +251,7 @@ crt_rpc_priv_alloc(crt_opcode_t opc, struct crt_rpc_priv **priv_allocated,
 		D_ERROR("opc: %#x, lookup failed.\n", opc);
 		D_GOTO(out, rc = -DER_UNREG);
 	}
+	// 输入或者输出过大，则不能分配，该结构体crt_rpc_priv是专门为小rpc设置的吧
 	if (opc_info->coi_crf != NULL &&
 	    (opc_info->coi_crf->crf_size_in > CRT_MAX_INPUT_SIZE ||
 	     opc_info->coi_crf->crf_size_out > CRT_MAX_OUTPUT_SIZE)) {
@@ -270,6 +281,15 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 释放rpc描述符
+ * 
+ * 1. 组描述符crt_grp_priv需要特别处理
+ * 2. 判断并销毁物理地址字符串
+ * 3. 销毁锁pthread_spinlock_t
+ * 
+ * @param rpc_priv 
+ */
 void
 crt_rpc_priv_free(struct crt_rpc_priv *rpc_priv)
 {
@@ -287,6 +307,14 @@ crt_rpc_priv_free(struct crt_rpc_priv *rpc_priv)
 	D_FREE(rpc_priv);
 }
 
+/**
+ * @brief 设置rpc私有信息中的传输端点信息
+ * 
+ * 1. 如果tgt_ep中不含组的句柄信息，则使用默认的全局变量中主要组的句柄信息
+ * 
+ * @param rpc_priv 
+ * @param tgt_ep 
+ */
 static inline void
 crt_rpc_priv_set_ep(struct crt_rpc_priv *rpc_priv, crt_endpoint_t *tgt_ep)
 {
@@ -301,7 +329,13 @@ crt_rpc_priv_set_ep(struct crt_rpc_priv *rpc_priv, crt_endpoint_t *tgt_ep)
 	rpc_priv->crp_have_ep = 1;
 }
 
-
+/**
+ * @brief 根据传入的传输端点标识符得到对应的组私有信息
+ * 
+ * @param tgt_ep 
+ * @param ret_grp_priv 
+ * @return int 
+ */
 static int check_ep(crt_endpoint_t *tgt_ep, struct crt_grp_priv **ret_grp_priv)
 {
 	struct crt_grp_priv	*grp_priv;
@@ -318,7 +352,18 @@ out:
 	return rc;
 }
 
-
+/**
+ * @brief 内部使用的rpc请求创建函数
+ * 
+ * 创建一个crt_rpc_priv，然后返回其中的公开信息结构体crt_rpc_t
+ * 
+ * @param crt_ctx 
+ * @param tgt_ep 
+ * @param opc 
+ * @param forward 
+ * @param req 
+ * @return int 
+ */
 int
 crt_req_create_internal(crt_context_t crt_ctx, crt_endpoint_t *tgt_ep,
 			crt_opcode_t opc, bool forward, crt_rpc_t **req)
@@ -1374,6 +1419,14 @@ crt_common_hdr_init(struct crt_rpc_priv *rpc_priv, crt_opcode_t opc)
 	rpc_priv->crp_reply_hdr.cch_xid = xid;
 }
 
+/**
+ * @brief 初始化rpc私有信息结构体
+ * 
+ * @param rpc_priv 
+ * @param crt_ctx 
+ * @param srv_flag 
+ * @return int 
+ */
 int
 crt_rpc_priv_init(struct crt_rpc_priv *rpc_priv, crt_context_t crt_ctx,
 		  bool srv_flag)

@@ -325,6 +325,7 @@ void d_getenv_int(const char *env, unsigned int *int_val);
 #if !defined(container_of)
 /* given a pointer @ptr to the field @member embedded into type (usually
  * struct) @type, return pointer to the embedding instance of @type.
+ * 返回container，即member所在的结构体实例
  */
 # define container_of(ptr, type, member)		\
 	((type *)((char *)(ptr)-(char *)(&((type *)0)->member)))

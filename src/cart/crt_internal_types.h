@@ -240,6 +240,7 @@ struct crt_opc_info {
 
 	/* Sizes/offset used when buffers are part of the same allocation
 	 * as the rpc descriptor.
+	 * 用于分配rpc的描述符，即
 	 */
 	size_t			 coi_rpc_size;  /// 该rpc编码后的大小，元信息+输出+输入
 	off_t			 coi_input_offset;  /// 输入在buffer中的起始偏移

@@ -107,12 +107,19 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 销毁crt_rpc_priv中的组描述符crt_grp_priv
+ * 
+ * 实际上只是计数减一，减至0才销毁
+ * 
+ * @param rpc_priv 
+ */
 void
 crt_corpc_info_fini(struct crt_rpc_priv *rpc_priv)
 {
 	D_ASSERT(rpc_priv->crp_coll && rpc_priv->crp_corpc_info);
 	d_rank_list_free(rpc_priv->crp_corpc_info->co_filter_ranks);
-	if (rpc_priv->crp_corpc_info->co_grp_ref_taken)
+	if (rpc_priv->crp_corpc_info->co_grp_ref_taken) // 如果还在使用，减少co_grp_priv的计数
 		crt_grp_priv_decref(rpc_priv->crp_corpc_info->co_grp_priv);
 	D_FREE_PTR(rpc_priv->crp_corpc_info);
 }

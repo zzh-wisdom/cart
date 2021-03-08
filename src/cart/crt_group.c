@@ -1072,7 +1072,11 @@ out:
 }
 
 
-
+/**
+ * @brief 销毁组group描述符，待看！
+ * 
+ * @param grp_priv 
+ */
 void
 crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 {
@@ -1354,6 +1358,11 @@ out:
 
 /*
  * Return the enclosing private struct ptr of grp.
+ * 
+ * 返回grp的所在的结构体(crt_grp_priv)的指针ptr，
+ * 如果grp为null，则返回全局数据中的组私有信息
+ * 
+ * grp指向某个crt_grp_priv结构体中的crt_group_t成员
  */
 struct crt_grp_priv *
 crt_grp_pub2priv(crt_group_t *grp)
@@ -1373,6 +1382,13 @@ crt_grp_pub2priv(crt_group_t *grp)
 	return grp_priv;
 }
 
+/**
+ * @brief 获取组版本信息
+ * 
+ * @param grp 
+ * @param version 
+ * @return int 
+ */
 int
 crt_group_version(crt_group_t *grp, uint32_t *version)
 {
@@ -1399,6 +1415,13 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 设置组的版本
+ * 
+ * @param grp 
+ * @param version 
+ * @return int 
+ */
 int
 crt_group_version_set(crt_group_t *grp, uint32_t version)
 {

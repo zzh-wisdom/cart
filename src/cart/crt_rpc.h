@@ -128,7 +128,7 @@ typedef enum {
 
 /** corpc（集体rpc） info to track the tree topo and child RPCs info 跟踪树拓扑和子RPC信息 */
 struct crt_corpc_info {
-	struct crt_grp_priv	*co_grp_priv;  /// 组信息？
+	struct crt_grp_priv	*co_grp_priv;  /// 组信息/描述符
 	/** excluded or exclusive ranks */
 	d_rank_list_t		*co_filter_ranks;
 	uint32_t		 co_grp_ver;
@@ -162,11 +162,19 @@ struct crt_corpc_info {
 	 * co_root_excluded是排除等级列表中的根标志
 	 */
 				 co_root_excluded:1,
-	/** flag of if refcount taken使用 for co_grp_priv */
+	/** flag of if refcount taken使用 for co_grp_priv 即上面co_grp_priv结构体实例是否被使用*/
 				 co_grp_ref_taken:1;
 	int			 co_rc;
 };
 
+/**
+ * @brief rpc私有信息(描述符)
+ * 
+ * 即rpc元信息
+ * 
+ * 注意：不能存储大参数信息
+ * 
+ */
 struct crt_rpc_priv {
 	crt_rpc_t		crp_pub; /** public part */
 	/** link to crt_ep_inflight::epi_req_q/::epi_req_waitq */
@@ -202,7 +210,7 @@ struct crt_rpc_priv {
 	uint32_t		crp_srv:1, /** flag of server received request */
 				crp_output_got:1,
 				crp_input_got:1,
-				/** flag of collective RPC request 标识是否为 corpc？*/
+				/** flag of collective RPC request 标识是否为 corpc，若是，crp_corpc_info会被设置*/
 				crp_coll:1,
 				/** flag of crp_tgt_uri need to be freed */
 				crp_uri_free:1,
@@ -212,14 +220,14 @@ struct crt_rpc_priv {
 				crp_in_binheap:1,
 				/** set if a call to crt_req_reply pending */
 				crp_reply_pending:1,
-				/** set to 1 if target ep is set */
+				/** set to 1 if target ep is set （ep位于crp_pub）*/
 				crp_have_ep:1,
 				/** RPC is tracked by the context */
 				crp_ctx_tracked:1,
 				/** 1 if RPC is succesfully put on the wire */
 				crp_on_wire:1;
 	uint32_t		crp_refcount;
-	struct crt_opc_info	*crp_opc_info;
+	struct crt_opc_info	*crp_opc_info;  /// opcode信息
 	/* corpc info, only valid when (crp_coll == 1) */
 	struct crt_corpc_info	*crp_corpc_info;
 	pthread_spinlock_t	crp_lock;

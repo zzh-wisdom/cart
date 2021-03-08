@@ -481,6 +481,14 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 判断cart是否初始化
+ * 
+ * 即全局信息是否初始化
+ * 
+ * @return true 
+ * @return false 
+ */
 bool
 crt_initialized()
 {

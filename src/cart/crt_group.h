@@ -79,8 +79,12 @@ struct crt_grp_priv_sec {
 
 struct crt_grp_priv;
 
+/**
+ * @brief 组的私有信息
+ * 
+ */
 struct crt_grp_priv {
-	d_list_t		 gp_link; /* link to crt_grp_list */
+	d_list_t		 gp_link; /** link to crt_grp_list */
 	crt_group_t		 gp_pub; /* public grp handle */
 
 	/* Link to a primary group; only set for secondary groups  */
@@ -139,10 +143,10 @@ struct crt_grp_priv {
 	uint32_t		 gp_primary:1, /* flag of primary group */
 				 gp_view:1; /* flag to indicate it is a view */
 
-	/* group reference count */
+	/** group reference count 当前结构体的引用计数*/
 	uint32_t		 gp_refcount;
 
-	pthread_rwlock_t	 gp_rwlock; /* protect all fields above */
+	pthread_rwlock_t	 gp_rwlock; /** protect all fields above */
 };
 
 
@@ -265,7 +269,7 @@ struct crt_lookup_item {
 };
 
 
-/** structure of global group data */
+/** structure of global group data 全局的组数据*/
 struct crt_grp_gdata {
 	struct crt_grp_priv	*gg_primary_grp;
 
@@ -336,8 +340,11 @@ crt_grp_priv_addref(struct crt_grp_priv *grp_priv)
 		grp_priv->gp_pub.cg_grpid, refcount);
 }
 
-/*
+/**
  * Decrease the attach refcount and return the result.
+ * 
+ * 减少附加引用计数并返回结果。
+ * 
  * Returns negative value for error case.
  */
 static inline int
@@ -349,7 +356,7 @@ crt_grp_priv_decref(struct crt_grp_priv *grp_priv)
 	D_ASSERT(grp_priv != NULL);
 
 	D_RWLOCK_WRLOCK(&grp_priv->gp_rwlock);
-	if (grp_priv->gp_refcount == 0) {
+	if (grp_priv->gp_refcount == 0) { // 已经减到0，说明之前就应该destroy，这次不用再重复destroy
 		D_DEBUG(DB_TRACE, "group (%s), refcount already dropped "
 			"to 0.\n", grp_priv->gp_pub.cg_grpid);
 		D_RWLOCK_UNLOCK(&grp_priv->gp_rwlock);

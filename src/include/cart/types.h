@@ -115,22 +115,28 @@ typedef d_string_t	crt_group_id_t;
 /** Indicates rank not being set */
 #define CRT_NO_RANK 0xFFFFFFFF
 
+/**
+ * @brief group句柄
+ * 
+ * 根据该结构体的指针可以回溯到所在的组私有信息结构体crt_grp_priv
+ * 
+ */
 typedef struct crt_group {
 	/** the group ID of this group */
 	crt_group_id_t	cg_grpid;
 } crt_group_t;
 
-/** transport endpoint identifier */
+/** transport endpoint identifier 传输端点标识符*/
 typedef struct {
-	/** group handle, NULL means the primary group */
+	/** group handle, NULL means the primary group。null则表示主要组，即全局变量中的组信息*/
 	crt_group_t	*ep_grp;
-	/** rank number within the group */
+	/** rank number within the group 组内的级别数*/
 	d_rank_t	 ep_rank;
 	/** tag, now used as the context ID of the target rank */
 	uint32_t	 ep_tag;
 } crt_endpoint_t;
 
-/** CaRT context handle */
+/** CaRT context handle 句柄*/
 typedef void *crt_context_t;
 
 /** Physical address string, e.g., "bmi+tcp://localhost:3344". */
@@ -180,7 +186,9 @@ enum crt_rpc_flags {
 
 struct crt_rpc;
 
-/** Public RPC request/reply, exports to user 相当于一个rpc实例？*/
+/** Public RPC request/reply, exports to user rpc私有(描述符)信息中暴露给外界的信息
+ * 实际上，对于用户而言就代表一个rpc了吧，根据这个结构体可以回溯得到rpc的私有信息结构体
+*/
 typedef struct crt_rpc {
 	crt_context_t		cr_ctx; /**< CRT context of the RPC */
 	crt_endpoint_t		cr_ep; /**< endpoint ID */

@@ -204,6 +204,14 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 查找指定的opcode，返回响应的crt_opc_info*
+ * 
+ * @param map 
+ * @param opc 
+ * @param locked 为0则要上锁
+ * @return struct crt_opc_info* 
+ */
 struct crt_opc_info *
 crt_opc_lookup(struct crt_opc_map *map, crt_opcode_t opc, int locked)
 {
@@ -296,7 +304,9 @@ crt_opc_reg(struct crt_opc_info *opc_info, crt_opcode_t opc, uint32_t flags,
 	 * not input so put the output buffer first and allocate input_offset
 	 * bytes only if forward is set.
 	 * 
-	 * 先是rpc的主要信息（struct crt_rpc_priv），然后是输出、输入
+	 * 先是rpc的主要信息（struct crt_rpc_priv），然后是输出、输入。
+	 * 如果forward为true，则不分配input缓冲区
+	 * 
 	 */
 	opc_info->coi_output_offset = D_ALIGNUP(sizeof(struct crt_rpc_priv),
 						64);

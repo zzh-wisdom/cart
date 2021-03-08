@@ -90,7 +90,7 @@ typedef struct {
 	size_t		iov_len;
 } d_iov_t;
 
-/** Server identification */
+/** Server identification 服务器识别*/
 typedef uint32_t	d_rank_t;
 
 typedef struct {
