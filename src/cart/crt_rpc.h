@@ -218,7 +218,7 @@ struct crt_rpc_priv {
 				crp_forward:1,
 				/** flag of in timeout binheap */
 				crp_in_binheap:1,
-				/** set if a call to crt_req_reply pending */
+				/** set if a call to crt_req_reply pending 设置对crt_req_reply的调用是否挂起，挂起就说明rpc还未完成，比如回复还未发送回客户端*/
 				crp_reply_pending:1,
 				/** set to 1 if target ep is set （ep位于crp_pub）*/
 				crp_have_ep:1,
@@ -231,9 +231,9 @@ struct crt_rpc_priv {
 	/* corpc info, only valid when (crp_coll == 1) */
 	struct crt_corpc_info	*crp_corpc_info;
 	pthread_spinlock_t	crp_lock;
-	struct crt_common_hdr	crp_reply_hdr; /* common header for reply */
-	struct crt_common_hdr	crp_req_hdr; /* common header for request */
-	struct crt_corpc_hdr	crp_coreq_hdr; /* collective request header */
+	struct crt_common_hdr	crp_reply_hdr; /** common header for reply */
+	struct crt_common_hdr	crp_req_hdr; /** common header for request */
+	struct crt_corpc_hdr	crp_coreq_hdr; /** collective request header */
 };
 
 /**

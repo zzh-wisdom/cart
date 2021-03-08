@@ -241,6 +241,13 @@ unlock:
 }
 
 /* returns true on success */
+/**
+ * @brief 将rpc put到pool中
+ * 
+ * @param rpc_priv 
+ * @return true 
+ * @return false 
+ */
 static inline bool
 crt_hg_pool_put(struct crt_rpc_priv *rpc_priv)
 {
@@ -1031,6 +1038,11 @@ crt_hg_req_create(struct crt_hg_context *hg_ctx, struct crt_rpc_priv *rpc_priv)
 	return rc;
 }
 
+/**
+ * @brief 销毁rpc的私有信息
+ * 
+ * @param rpc_priv 
+ */
 void
 crt_hg_req_destroy(struct crt_rpc_priv *rpc_priv)
 {
@@ -1039,7 +1051,7 @@ crt_hg_req_destroy(struct crt_rpc_priv *rpc_priv)
 	D_ASSERT(rpc_priv != NULL);
 	if (rpc_priv->crp_output_got != 0) {
 		hg_ret = HG_Free_output(rpc_priv->crp_hg_hdl,
-					&rpc_priv->crp_pub.cr_output);
+					&rpc_priv->crp_pub.cr_output);  // 释放rpc输出
 		if (hg_ret != HG_SUCCESS) {
 			RPC_ERROR(rpc_priv,
 				  "HG_Free_output failed, hg_ret: %d\n",
@@ -1048,7 +1060,7 @@ crt_hg_req_destroy(struct crt_rpc_priv *rpc_priv)
 	}
 	if (rpc_priv->crp_input_got != 0) {
 		hg_ret = HG_Free_input(rpc_priv->crp_hg_hdl,
-				       &rpc_priv->crp_pub.cr_input);
+				       &rpc_priv->crp_pub.cr_input);  // 释放rpc输入
 		if (hg_ret != HG_SUCCESS)
 			RPC_ERROR(rpc_priv,
 				  "HG_Free_input failed, hg_ret: %d\n",
@@ -1253,7 +1265,7 @@ out:
 	return rc;
 }
 
-/* just to release the reference taken at crt_hg_reply_send */
+/** just to release the reference taken at crt_hg_reply_send */
 static hg_return_t
 crt_hg_reply_send_cb(const struct hg_cb_info *hg_cbinfo)
 {
@@ -1277,6 +1289,12 @@ crt_hg_reply_send_cb(const struct hg_cb_info *hg_cbinfo)
 	return hg_ret;
 }
 
+/**
+ * @brief 发送rpc的回复信息
+ * 
+ * @param rpc_priv 
+ * @return int 
+ */
 int
 crt_hg_reply_send(struct crt_rpc_priv *rpc_priv)
 {
@@ -1300,6 +1318,12 @@ crt_hg_reply_send(struct crt_rpc_priv *rpc_priv)
 	return rc;
 }
 
+/**
+ * @brief Sent CART level error message back to client
+ * 
+ * @param rpc_priv 
+ * @param error_code 
+ */
 void
 crt_hg_reply_error_send(struct crt_rpc_priv *rpc_priv, int error_code)
 {

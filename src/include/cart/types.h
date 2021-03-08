@@ -194,7 +194,7 @@ typedef struct crt_rpc {
 	crt_endpoint_t		cr_ep; /**< endpoint ID */
 	crt_opcode_t		cr_opc; /**< opcode of the RPC */
 	crt_rpc_input_t		cr_input; /**< input parameter struct */
-	crt_rpc_output_t	cr_output; /**< output parameter struct */
+	crt_rpc_output_t	cr_output; /**< output parameter struct 指向输出数据的指针*/
 	size_t			cr_input_size; /**< size of input struct */
 	size_t			cr_output_size; /**< size of output struct */
 	/** optional bulk handle for collective RPC */

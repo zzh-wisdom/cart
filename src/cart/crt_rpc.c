@@ -284,7 +284,7 @@ out:
 /**
  * @brief 释放rpc描述符
  * 
- * 1. 组描述符crt_grp_priv需要特别处理
+ * 1. 组私有信息（描述符）crt_grp_priv需要特别处理
  * 2. 判断并销毁物理地址字符串
  * 3. 销毁锁pthread_spinlock_t
  * 
@@ -353,7 +353,7 @@ out:
 }
 
 /**
- * @brief 内部使用的rpc请求创建函数
+ * @brief rpc请求创建函数，内部使用
  * 
  * 创建一个crt_rpc_priv，然后返回其中的公开信息结构体crt_rpc_t
  * 
@@ -362,7 +362,7 @@ out:
  * @param opc 
  * @param forward 
  * @param req 
- * @return int 
+ * @return int
  */
 int
 crt_req_create_internal(crt_context_t crt_ctx, crt_endpoint_t *tgt_ep,
@@ -405,6 +405,20 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 创建请求
+ * 
+ * 确保：cart已经初始化
+ * 
+ * 1. 调用crt_req_create_internal创建一个rpc私有信息结构体
+ * 2. 根据传入的端点tgt_ep设置rpc私有信息的crp_grp_priv（组信息）
+ * 
+ * @param crt_ctx 
+ * @param tgt_ep 
+ * @param opc 
+ * @param[out] req 带回rpc的公有信息
+ * @return int 
+ */
 int
 crt_req_create(crt_context_t crt_ctx, crt_endpoint_t *tgt_ep, crt_opcode_t opc,
 	       crt_rpc_t **req)
@@ -444,6 +458,14 @@ crt_req_create(crt_context_t crt_ctx, crt_endpoint_t *tgt_ep, crt_opcode_t opc,
 out:
 	return rc;
 }
+
+/**
+ * @brief 设置rpc的端点、组信息
+ * 
+ * @param req 
+ * @param tgt_ep 
+ * @return int 
+ */
 int
 crt_req_set_endpoint(crt_rpc_t *req, crt_endpoint_t *tgt_ep)
 {
@@ -465,9 +487,9 @@ crt_req_set_endpoint(crt_rpc_t *req, crt_endpoint_t *tgt_ep)
 	rc = check_ep(tgt_ep, &grp_priv);
 	if (rc != 0)
 		D_GOTO(out, rc);
-
+	// 设置端点信息
 	crt_rpc_priv_set_ep(rpc_priv, tgt_ep);
-
+	// 设置组信息
 	rpc_priv->crp_grp_priv = grp_priv;
 
 	RPC_TRACE(DB_NET, rpc_priv, "ep set %u.%u.\n",
@@ -477,6 +499,13 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 设置rpc的超时时间
+ * 
+ * @param req 
+ * @param timeout_sec 
+ * @return int 
+ */
 int
 crt_req_set_timeout(crt_rpc_t *req, uint32_t timeout_sec)
 {
@@ -495,7 +524,15 @@ out:
 	return rc;
 }
 
-/* Called from a decref() call when the count drops to zero */
+/** Called from a decref() call when the count drops to zero */
+
+/**
+ * @brief 销毁rpc，即rpc私有信息结构体
+ * 
+ * 当计数下降到零时从decref（）调用中调用该函数
+ * 
+ * @param rpc_priv 
+ */
 void
 crt_req_destroy(struct crt_rpc_priv *rpc_priv)
 {
@@ -506,6 +543,9 @@ crt_req_destroy(struct crt_rpc_priv *rpc_priv)
 		/* We have executed the user RPC handler, but the user
 		 * handler forgot to call crt_reply_send(). We send a
 		 * CART level error message to notify the client
+		 * 
+		 * 我们已经执行了用户RPC处理程序，但是用户处理程序忘记了调用crt_reply_send（）。 
+		 * 我们发送CART级错误消息以通知客户
 		 */
 		crt_hg_reply_error_send(rpc_priv, -DER_NOREPLY);
 	}
@@ -1352,6 +1392,11 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 输入输出buffer finish，重置参数（意味着crt_rpc_priv可以重复使用来发送多个rpc吧）
+ * 
+ * @param rpc_priv 
+ */
 static void
 crt_rpc_inout_buff_fini(struct crt_rpc_priv *rpc_priv)
 {
@@ -1465,6 +1510,13 @@ exit:
 	return rc;
 }
 
+/**
+ * @brief rpc finish 
+ * 
+ * 重置相关信息
+ * 
+ * @param rpc_priv 
+ */
 void
 crt_rpc_priv_fini(struct crt_rpc_priv *rpc_priv)
 {

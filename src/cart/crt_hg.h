@@ -101,6 +101,10 @@ struct crt_hg_hdl {
 	hg_handle_t		chh_hdl;
 };
 
+/**
+ * @brief hg handle pool
+ * 
+ */
 struct crt_hg_pool {
 	pthread_spinlock_t	chp_lock;
 	/* number of HG handles in pool */
