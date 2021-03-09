@@ -242,7 +242,9 @@ unlock:
 
 /* returns true on success */
 /**
- * @brief 将rpc put到pool中
+ * @brief 将rpc put到（hg_handle）pool中
+ * 
+ * pool有最大容量限制
  * 
  * @param rpc_priv 
  * @return true 
@@ -260,7 +262,7 @@ crt_hg_pool_put(struct crt_rpc_priv *rpc_priv)
 	D_ASSERT(rpc_priv->crp_hg_hdl != HG_HANDLE_NULL);
 
 	if (rpc_priv->crp_hdl_reuse == NULL) {
-		D_ALLOC_PTR(hdl);
+		D_ALLOC_PTR(hdl);  // 创建一个新的hg handle
 		if (hdl == NULL)
 			D_GOTO(out, 0);
 		D_INIT_LIST_HEAD(&hdl->chh_link);
@@ -338,6 +340,13 @@ out:
 	return rc;
 }
 
+/**
+ * @brief free hg addr
+ * 
+ * @param hg_ctx 
+ * @param addr 
+ * @return int 
+ */
 int
 crt_hg_addr_free(struct crt_hg_context *hg_ctx, hg_addr_t addr)
 {
@@ -443,6 +452,12 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 获取info string，即物理地址
+ * 
+ * @param string 
+ * @return int 
+ */
 static int
 crt_get_info_string(char **string)
 {
@@ -498,7 +513,7 @@ crt_hg_log(FILE *stream, const char *fmt, ...)
 	return 0;
 }
 
-/* to be called only in crt_init */
+/** to be called only in crt_init */
 int
 crt_hg_init(crt_phy_addr_t *addr, bool server)
 {
@@ -1086,6 +1101,8 @@ crt_hg_req_destroy(struct crt_rpc_priv *rpc_priv)
 		 * calling HG_Get_input, we don't take a reference on the
 		 * handle calling destroy here can result in the handle
 		 * getting freed before mercury is done with it
+		 * HACK警报：因为我们进行了低级打包，我们是否需要为HG_Free_input提供低级接口。
+		 * 如果不调用HG_Get_input，则不会在调用destroy的句柄上进行引用，这会导致在处理完mercury之前释放句柄
 		 */
 		hg_ret = HG_Destroy(rpc_priv->crp_hg_hdl);
 		if (hg_ret != HG_SUCCESS) {

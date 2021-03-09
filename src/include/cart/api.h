@@ -90,6 +90,8 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt);
  * Initialize CRT transport layer. Must be called on both the server side and
  * the client side. This function is reference counted, it can be called
  * multiple times. Each call must be paired with a corresponding crt_finalize().
+ * 
+ * 该函数与crt_finalize()成对使用
  *
  * \param[in] grpid            primary group ID, user can provide a NULL value
  *                             in that case will use the default group ID

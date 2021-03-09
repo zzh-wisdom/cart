@@ -553,7 +553,7 @@ void d_getenv_bool(const char *env, bool *bool_val)
 }
 
 /**
- * get an integer type environment variables
+ * get an integer type environment variables 获取整数类型的环境变量
  *
  * \param env	[IN]		name of the environment variable
  * \param int_val [IN/OUT]	returned value of the ENV. Will not change the

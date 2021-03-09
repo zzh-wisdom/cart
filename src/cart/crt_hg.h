@@ -51,9 +51,9 @@
 #include <mercury_log.h>
 #include <na.h>
 
-/** the shared HG RPC ID used for all CRT opc */
+/** the shared HG RPC ID used for all CRT opc 用于所有CRT opc的共享HG RPC ID */
 #define CRT_HG_RPCID		(0xDA036868)
-#define CRT_HG_ONEWAY_RPCID	(0xDA036869)
+#define CRT_HG_ONEWAY_RPCID	(0xDA036869)  /// 单边RPC？
 
 /** MAX number of HG handles in pool */
 #define CRT_HG_POOL_MAX_NUM	(512)
@@ -107,24 +107,24 @@ struct crt_hg_hdl {
  */
 struct crt_hg_pool {
 	pthread_spinlock_t	chp_lock;
-	/* number of HG handles in pool */
+	/** number of HG handles in pool */
 	int32_t			chp_num;
-	/* maximum number of HG handles in pool */
+	/** maximum number of HG handles in pool */
 	int32_t			chp_max_num;
-	/* HG handle list */
+	/** HG handle list 新加的元素放在尾部*/
 	d_list_t		chp_list;
 	bool			chp_enabled;
 };
 
 /** HG context */
 struct crt_hg_context {
-	bool			 chc_shared_na; /* flag for shared na_class */
-	na_class_t		*chc_nacla; /* NA class */
-	hg_class_t		*chc_hgcla; /* HG class */
-	hg_context_t		*chc_hgctx; /* HG context */
-	hg_class_t		*chc_bulkcla; /* bulk class */
-	hg_context_t		*chc_bulkctx; /* bulk context */
-	struct crt_hg_pool	 chc_hg_pool; /* HG handle pool */
+	bool			 chc_shared_na; /** flag for shared na_class 是否共享 na_class */
+	na_class_t		*chc_nacla; /** NA class */
+	hg_class_t		*chc_hgcla; /** HG class */
+	hg_context_t		*chc_hgctx; /** HG context */
+	hg_class_t		*chc_bulkcla; /** bulk class */
+	hg_context_t		*chc_bulkctx; /** bulk context */
+	struct crt_hg_pool	 chc_hg_pool; /** HG handle pool */
 };
 
 /** HG level global data */
@@ -193,6 +193,17 @@ crt_hgret_2_der(int hg_ret)
 
 /* some simple helper functions */
 typedef hg_rpc_cb_t crt_hg_rpc_cb_t;
+
+/**
+ * @brief 向hg_class注册rpc调用
+ * 
+ * @param hg_class 
+ * @param rpcid  
+ * @param in_proc_cb 
+ * @param out_proc_cb 
+ * @param rpc_cb 
+ * @return int 
+ */
 static inline int
 crt_hg_reg(hg_class_t *hg_class, hg_id_t rpcid, crt_proc_cb_t in_proc_cb,
 	   crt_proc_cb_t out_proc_cb, crt_hg_rpc_cb_t rpc_cb)

@@ -306,6 +306,13 @@ crt_ui_destroy(struct crt_uri_item *ui)
 	D_FREE_PTR(ui);
 }
 
+/**
+ * @brief 获取tag对应的uri
+ * 
+ * @param li 
+ * @param tag 
+ * @return char* 
+ */
 static inline char *
 grp_li_uri_get(struct crt_lookup_item *li, int tag)
 {
@@ -320,7 +327,7 @@ grp_li_uri_get(struct crt_lookup_item *li, int tag)
 	rlink = d_hash_rec_find(&grp_priv->gp_uri_lookup_cache,
 				(void *)&rank, sizeof(rank));
 	/* It's possible to have crt_lookup_item for which uri
-	 * info has not been populated yet
+	 * info has not been populated yet  uri信息可能尚未填充
 	 */
 	if (rlink == NULL) {
 		D_DEBUG(DB_TRACE,
@@ -815,10 +822,16 @@ out:
 	return rc;
 }
 
-/*
- * Fill in the hg address  of a tag in the lookup cache of crt_ctx. The host
+/**
+ * Fill in the hg address of a tag in the lookup cache of crt_ctx. The host
  * rank where the tag resides in must exist in the cache before calling this
  * routine.
+ * 
+ * 在crt_ctx的查找缓存中填写tag的hg地址。调用此例程之前，tag所在的主机名必须在高速缓存中已存在。
+ * 
+ * 1. 找到所在的主要组，在主要组中通过ctx_id找到目标cache
+ * 2. 在lookup 缓存中插入一个 hg_addr，如果对应的tag位置已经存在了该地址，则销毁hg_addr，让hg_addr带回cache中的addr
+ * 
  */
 int
 crt_grp_lc_addr_insert(struct crt_grp_priv *passed_grp_priv,
@@ -827,7 +840,7 @@ crt_grp_lc_addr_insert(struct crt_grp_priv *passed_grp_priv,
 {
 	d_list_t		*rlink;
 	struct crt_lookup_item	*li;
-	struct crt_grp_priv	*grp_priv;
+	struct crt_grp_priv	*grp_priv; // 主要组
 	int			 ctx_idx;
 	int			 rc = 0;
 
@@ -877,14 +890,20 @@ out:
 	return rc;
 }
 
-/*
+/**
  * Lookup the URI and NA address of a (rank, tag) combination in the addr cache.
- * This function only looks into the address cache. If the requested (rank, tag)
+ * This function only looks into the address cache.
+ * 
+ * If the requested (rank, tag)
  * pair doesn't exist in the address cache, *hg_addr will be NULL on return, and
  * an empty record for the requested rank with NULL values will be inserted to
- * the cache. For input parameters, base_addr and hg_addr can not be both NULL.
+ * the cache. 
+ * 
+ * For input parameters, base_addr and hg_addr can not be both NULL.
  * (hg_addr == NULL) means the caller only want to lookup the base_addr.
  * (base_addr == NULL) means the caller only want to lookup the hg_addr.
+ * 
+ * 根据找ctx_idx, rank, tag查找对应的uri或者hg_addr
  */
 int
 crt_grp_lc_lookup(struct crt_grp_priv *grp_priv, int ctx_idx,
@@ -1158,6 +1177,8 @@ crt_grp_priv_destroy(struct crt_grp_priv *grp_priv)
 /**
  * Validates an input group id string. Checks both length and for presence of
  * invalid characters.
+ * 
+ * 验证输入组ID字符串。检查长度和是否存在*无效字符。
  *
  * \param grpid [IN]		unique group ID.
  *
@@ -3131,6 +3152,13 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 获取组所在主要组的rank
+ * 
+ * @param priv 
+ * @param rank 
+ * @return d_rank_t 
+ */
 d_rank_t
 crt_grp_priv_get_primary_rank(struct crt_grp_priv *priv, d_rank_t rank)
 {
@@ -3142,14 +3170,14 @@ crt_grp_priv_get_primary_rank(struct crt_grp_priv *priv, d_rank_t rank)
 		return rank;
 
 	rlink = d_hash_rec_find(&priv->gp_s2p_table,
-				(void *)&rank, sizeof(rank));
+				(void *)&rank, sizeof(rank));  // 这里计数加一
 	if (!rlink)
 		return CRT_NO_RANK;
 
-	rm = crt_rm_link2ptr(rlink);
+	rm = crt_rm_link2ptr(rlink);  // 找到rank在链表中的元素形式（kv）
 	pri_rank = rm->rm_value;
 
-	d_hash_rec_decref(&priv->gp_s2p_table, rlink);
+	d_hash_rec_decref(&priv->gp_s2p_table, rlink);  // 使用完需要计数减一
 
 	return pri_rank;
 }

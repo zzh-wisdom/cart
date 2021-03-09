@@ -58,10 +58,14 @@ struct free_index {
 	d_list_t	fi_link;
 };
 
-/* Structure for keeping track of group membership
+/**
+ * Structure for keeping track of group membership
  * This structure is temporary until dynamic group support is added
  * for secondary groups as well. When that happens structure could
  * get simplified
+ * 
+ * 跟踪组成员资格的结构此结构是临时的，直到为次级组添加了动态组支持为止。当发生这种情况时，结构可以得到简化
+ * 
  */
 struct crt_grp_membs {
 	/* list of free indices unused yet. Only used when pmix is disabled */
@@ -87,10 +91,10 @@ struct crt_grp_priv {
 	d_list_t		 gp_link; /** link to crt_grp_list */
 	crt_group_t		 gp_pub; /* public grp handle */
 
-	/* Link to a primary group; only set for secondary groups  */
+	/** Link to a primary group; only set for secondary groups  */
 	struct crt_grp_priv	*gp_priv_prim;
 
-	/* List of secondary groups associated with this group */
+	/** List of secondary groups associated with this group */
 	d_list_t		gp_sec_list;
 
 	/*
@@ -115,7 +119,7 @@ struct crt_grp_priv {
 
 	/* size (number of membs) of group */
 	uint32_t		 gp_size;
-	/*
+	/**
 	 * logical self rank in this group, only valid for local group.
 	 * the gp_membs->rl_ranks[gp_self] is its rank number in primary group.
 	 * For primary group, gp_self == gp_membs->rl_ranks[gp_self].
@@ -123,11 +127,12 @@ struct crt_grp_priv {
 	 * up to date.
 	 */
 	d_rank_t		 gp_self;
-	/* PSR rank in attached group */
+	/* PSR rank in attached group PSR在附属组中的rank */
 	d_rank_t		 gp_psr_rank;
-	/* PSR phy addr address in attached group */
+	/* PSR phy addr address in attached group 附加组中的PSR phy地址 */
 	crt_phy_addr_t		 gp_psr_phy_addr;
-	/* address lookup cache, only valid for primary group */
+	/** address lookup cache, only valid for primary group，数组，下标为ctx_idx，每个上下文id有一个cache，
+	 * 每个cache（table）的key为rank，一个元素中又包含一个数组，通过tag索引到具体的hg_addr*/
 	struct d_hash_table	 *gp_lookup_cache;
 
 	/* uri lookup cache, only valid for primary group */
@@ -136,11 +141,11 @@ struct crt_grp_priv {
 	/* Primary to secondary rank mapping table */
 	struct d_hash_table	 gp_p2s_table;
 
-	/* Secondary to primary rank mapping table */
+	/** Secondary to primary rank mapping table 二级到初级等级映射表 */
 	struct d_hash_table	 gp_s2p_table;
 
 	/* set of variables only valid in primary service groups */
-	uint32_t		 gp_primary:1, /* flag of primary group */
+	uint32_t		 gp_primary:1, /** flag of primary group 标识自己是否为主要组*/
 				 gp_view:1; /* flag to indicate it is a view */
 
 	/** group reference count 当前结构体的引用计数*/
@@ -226,7 +231,7 @@ struct crt_rank_mapping {
 	pthread_mutex_t	rm_mutex;
 };
 
-/* uri info for each remote rank */
+/** uri info for each remote rank */
 struct crt_uri_item {
 	/* link to crt_grp_priv::gp_uri_lookup_cache */
 	d_list_t	ui_link;
@@ -251,7 +256,7 @@ struct crt_uri_item {
 	pthread_mutex_t ui_mutex;
 };
 
-/* lookup cache item for one target */
+/** lookup cache item for one target */
 struct crt_lookup_item {
 	/* link to crt_grp_priv::gp_lookup_cache[ctx_idx] */
 	d_list_t		 li_link;

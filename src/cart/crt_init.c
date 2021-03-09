@@ -46,9 +46,13 @@
 #include "crt_internal.h"
 
 struct crt_gdata crt_gdata;
-static volatile int   gdata_init_flag;
+static volatile int   gdata_init_flag;  // 标识是否初始化
 struct crt_plugin_gdata crt_plugin_gdata;
 
+/**
+ * @brief 打印设置的环境变量
+ * 
+ */
 static void
 dump_envariables(void)
 {
@@ -95,7 +99,7 @@ exit:
 	return crt_rc;
 }
 
-/* first step init - for initializing crt_gdata */
+/** first step init - for initializing crt_gdata 初始化全局数据 */
 static int data_init(int server, crt_init_options_t *opt)
 {
 	uint32_t	timeout;
@@ -131,7 +135,8 @@ static int data_init(int server, crt_init_options_t *opt)
 	crt_gdata.cg_na_plugin = CRT_NA_OFI_SOCKETS;
 	crt_gdata.cg_share_na = false;
 
-	/* Apply CART-890 workaround for server side only */
+	/* Apply CART-890 workaround for server side only
+	仅将CART-890解决方法应用于服务器端 */
 	if (server) {
 		d_getenv_int("CRT_DISABLE_MEM_PIN", &mem_pin_disable);
 		if (mem_pin_disable == 0) {
@@ -252,6 +257,14 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 使用传入的flag和选项初始化cart
+ * 
+ * @param grpid 
+ * @param flags 
+ * @param opt 
+ * @return int 
+ */
 int
 crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 {
@@ -273,7 +286,7 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 		return rc;
 	}
 
-	crt_setup_log_fac();
+	crt_setup_log_fac(); // 启动log
 
 	D_INFO("libcart version %s initializing\n", CART_VERSION);
 
@@ -285,20 +298,20 @@ crt_init_opt(crt_group_id_t grpid, uint32_t flags, crt_init_options_t *opt)
 	}
 
 	if (grpid != NULL) {
-		if (crt_validate_grpid(grpid) != 0) {
+		if (crt_validate_grpid(grpid) != 0) {  // 检查输入的grpid是否有效
 			D_ERROR("grpid contains invalid characters "
 				"or is too long\n");
 			D_GOTO(out, rc = -DER_INVAL);
 		}
 
-		if (strcmp(grpid, CRT_DEFAULT_GRPID) == 0) {
+		if (strcmp(grpid, CRT_DEFAULT_GRPID) == 0) {  // 不能与默认的grpid相等
 			D_ERROR("invalid client grpid (same as "
 				"CRT_DEFAULT_GRPID).\n");
 			D_GOTO(out, rc = -DER_INVAL);
 		}
 	}
 
-	if (gdata_init_flag == 0) {
+	if (gdata_init_flag == 0) {  // 还未初始化
 		rc = data_init(server, opt);
 		if (rc != 0) {
 			D_ERROR("data_init failed, rc(%d) - %s.\n",
@@ -618,7 +631,7 @@ direct_out:
 	return rc;
 }
 
-/* global NA OFI plugin configuration */
+/** global NA OFI plugin configuration */
 struct na_ofi_config crt_na_ofi_conf;
 
 static inline na_bool_t is_integer_str(char *str)

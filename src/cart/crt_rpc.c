@@ -553,6 +553,12 @@ crt_req_destroy(struct crt_rpc_priv *rpc_priv)
 	crt_hg_req_destroy(rpc_priv);
 }
 
+/**
+ * @brief req对应的rpc私有信息的引用计数加一
+ * 
+ * @param req 
+ * @return int 
+ */
 int
 crt_req_addref(crt_rpc_t *req)
 {
@@ -571,6 +577,12 @@ out:
 	return rc;
 }
 
+/**
+ * @brief  req对应的rpc私有信息的引用计数加一
+ * 
+ * @param req 
+ * @return int 
+ */
 int
 crt_req_decref(crt_rpc_t *req)
 {
@@ -589,6 +601,13 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 根据hg add 查找callback？
+ * 
+ * @param hg_addr 
+ * @param arg rpc_priv
+ * @return int 
+ */
 static int
 crt_req_hg_addr_lookup_cb(hg_addr_t hg_addr, void *arg)
 {
@@ -610,7 +629,7 @@ crt_req_hg_addr_lookup_cb(hg_addr_t hg_addr, void *arg)
 		RPC_ERROR(rpc_priv,
 			  "opc: %#x with status of FWD_UNREACH\n",
 			  rpc_priv->crp_pub.cr_opc);
-		/* Valid hg_addr gets passed despite unreachable state */
+		/* Valid hg_addr gets passed despite unreachable state 尽管状态不可达，仍通过有效的hg_addr*/
 		crt_hg_addr_free(&crt_ctx->cc_hg_ctx, hg_addr);
 		D_GOTO(unreach, rc);
 	}
@@ -651,6 +670,13 @@ unreach:
 	return rc;
 }
 
+/**
+ * @brief 将base_uri字符串复制到rpc_priv->crp_tgt_uri指针
+ * 
+ * @param rpc_priv 
+ * @param base_uri 
+ * @return int 
+ */
 static inline int
 crt_req_fill_tgt_uri(struct crt_rpc_priv *rpc_priv, crt_phy_addr_t base_uri)
 {
@@ -908,6 +934,14 @@ out:
 }
 
 /* look in the local cache to find the NA address of the target */
+
+/** 
+ * @brief 在local cache中查找目标的NA地址
+ * 
+ * @param rpc_priv 
+ * @param uri_exists 
+ * @return int 
+ */
 static int
 crt_req_ep_lc_lookup(struct crt_rpc_priv *rpc_priv, bool *uri_exists)
 {
@@ -936,8 +970,8 @@ crt_req_ep_lc_lookup(struct crt_rpc_priv *rpc_priv, bool *uri_exists)
 	}
 
 
-	if (base_addr != NULL && rpc_priv->crp_hg_addr == NULL) {
-		rc = crt_req_fill_tgt_uri(rpc_priv, base_addr);
+	if (base_addr != NULL && rpc_priv->crp_hg_addr == NULL) { 
+		rc = crt_req_fill_tgt_uri(rpc_priv, base_addr); // 意味着rpc_priv中至少需要hg_addr和uri之一？
 		if (rc != 0)
 			D_ERROR("crt_req_fill_tgt_uri failed, "
 				"opc: %#x.\n", req->cr_opc);
@@ -949,6 +983,8 @@ crt_req_ep_lc_lookup(struct crt_rpc_priv *rpc_priv, bool *uri_exists)
 	 * cache, insert the URI of the PSR to the address cache.
 	 * Did it in crt_grp_attach(), in the case that this context created
 	 * later can insert it here.
+	 * 如果目标端点是PSR，并且尚未在地址缓存中，则将PSR的URI插入到地址缓存中。
+	 * 这是在crt_grp_attach（）中进行的，以防稍后创建的此上下文可以在此处插入它。
 	 */
 	if (base_addr == NULL && !crt_is_service()) {
 		D_RWLOCK_RDLOCK(&grp_priv->gp_rwlock);

@@ -60,14 +60,14 @@ struct crt_grp_gdata;
 struct crt_gdata {
 	crt_phy_addr_t		cg_addr; /// 物理地址字符串
 
-	bool			cg_server;  /// 是否为服务器？
+	bool			cg_server;  /// 是否为服务器
 	/**
 	 * share NA addr flag, true means all contexts share one NA class, fasle
 	 * means each context has its own NA class.  Each NA class has an
 	 * independent listening address.
 	 * 
 	 * 共享NA addr标志，为true表示所有上下文共享一个NA类，fasle表示每个上下文都有其自己的NA类。 
-	 * 每个NA类都有一个独立的侦听地址。
+	 * 每个NA类都有一个独立的侦听地址。默认为false
 	 */
 	bool			cg_share_na;
 	int			cg_na_plugin; /** NA plugin type 即底层使用的网络类型吧*/
@@ -168,13 +168,13 @@ extern struct crt_plugin_gdata		crt_plugin_gdata;
 /* crt_context */
 struct crt_context {
 	d_list_t		 cc_link; /* link to gdata.cg_ctx_list */
-	int			 cc_idx; /* context index */
+	int			 cc_idx; /** context index */
 	struct crt_hg_context	 cc_hg_ctx; /* HG context */
 	void			*cc_rpc_cb_arg;
 	crt_rpc_task_t		 cc_rpc_cb; /* rpc callback */
 	/* in-flight endpoint tracking hash table */
 	struct d_hash_table	 cc_epi_table;
-	/* binheap for inflight RPC timeout tracking */
+	/** binheap for inflight RPC timeout tracking binheap用于进行中的RPC超时跟踪*/
 	struct d_binheap	 cc_bh_timeout;
 	/* mutex to protect cc_epi_table and timeout binheap */
 	pthread_mutex_t		 cc_mutex;

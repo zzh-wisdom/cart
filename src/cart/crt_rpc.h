@@ -97,9 +97,9 @@ struct crt_common_hdr {
 	uint32_t	cch_flags;
 	/** HLC timestamp */
 	uint64_t	cch_hlc;
-	/** destination rank in default primary group */
+	/** destination rank in default primary group 默认主要组中的目标rank*/
 	d_rank_t	cch_dst_rank;
-	/** originator rank in default primary group 默认主要组中的发起者等级 */
+	/** originator rank in default primary group 默认主要组中的发起者rank，server才有*/
 	d_rank_t	cch_src_rank;
 	/** tag to which rpc request was sent to */
 	uint32_t	cch_dst_tag;

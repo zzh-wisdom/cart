@@ -130,7 +130,7 @@ typedef struct crt_group {
 typedef struct {
 	/** group handle, NULL means the primary group。null则表示主要组，即全局变量中的组信息*/
 	crt_group_t	*ep_grp;
-	/** rank number within the group 组内的级别数*/
+	/** rank number within the group 组内的级别数，也是目标dst的rank*/
 	d_rank_t	 ep_rank;
 	/** tag, now used as the context ID of the target rank */
 	uint32_t	 ep_tag;
@@ -426,7 +426,7 @@ typedef int (*crt_progress_cond_cb_t)(void *arg);
 enum crt_init_flag_bits {
 	/**
 	 * When set enables the server mode which listens
-	 * for incoming requests. Clients should not set this flag
+	 * for incoming requests. Clients should not set this flag 表示为服务器，需要监听
 	 */
 	CRT_FLAG_BIT_SERVER		= 1U << 0,
 

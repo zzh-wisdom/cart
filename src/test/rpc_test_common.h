@@ -138,6 +138,10 @@ CRT_RPC_DEFINE(crt_rpc_grp_io, CRT_ISEQ_GRP_IO, CRT_OSEQ_GRP_IO)
 CRT_RPC_DECLARE(crt_multitier_test_no_io, CRT_ISEQ_NULL, CRT_OSEQ_NULL)
 CRT_RPC_DEFINE(crt_multitier_test_no_io, CRT_ISEQ_NULL, CRT_OSEQ_NULL)
 
+/**
+ * @brief 客户端
+ * 
+ */
 struct rpc_test_cli {
 	char			config_path[FILE_PATH_SIZE];
 	char			test_file_path[FILE_PATH_SIZE];
@@ -149,13 +153,17 @@ struct rpc_test_cli {
 	crt_context_t		crt_ctx;
 	d_rank_list_t		*psr_cand_list;
 	pthread_t		progress_thid;
-	sem_t			cli_sem;
+	sem_t			cli_sem;  /// 信号量
 	uint32_t		timeout;
 	uint32_t		shutdown;
 	uint32_t		grp_size[2];
-	uint32_t		target_grp_size;
+	uint32_t		target_grp_size;  /// 默认为0
 };
 
+/**
+ * @brief 服务器
+ * 
+ */
 struct rpc_test_srv {
 	char			config_path[FILE_PATH_SIZE];
 	char			*local_group_name;

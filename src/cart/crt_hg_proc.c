@@ -45,6 +45,13 @@
 
 #define CRT_PROC_NULL (NULL)
 
+/**
+ * @brief 获取crt_proc_t中的opcode
+ * 
+ * @param proc 
+ * @param proc_op 
+ * @return int 
+ */
 int
 crt_proc_get_op(crt_proc_t proc, crt_proc_op_t *proc_op)
 {
@@ -441,6 +448,7 @@ out:
 	return rc;
 }
 
+/// 将 crt_common_hdr 编解码
 static inline int
 crt_proc_common_hdr(crt_proc_t proc, struct crt_common_hdr *hdr)
 {
@@ -610,7 +618,8 @@ out:
 	return rc;
 }
 
-/* NB: caller should pass in &rpc_pub->cr_input as the \param data */
+/** NB: caller should pass in &rpc_pub->cr_input as the \param data
+注意：呼叫者应将＆rpc_pub-> cr_input作为\param数据传递 */
 int
 crt_proc_in_common(crt_proc_t proc, crt_rpc_input_t *data)
 {
@@ -633,17 +642,17 @@ crt_proc_in_common(crt_proc_t proc, crt_rpc_input_t *data)
 	/* D_DEBUG("in crt_proc_in_common, data: %p\n", *data); */
 
 	if (proc_op != CRT_PROC_FREE) {
-		if (proc_op == CRT_PROC_ENCODE) {
+		if (proc_op == CRT_PROC_ENCODE) {  // 编码
 			hdr = &rpc_priv->crp_req_hdr;
 
 			hdr->cch_flags = rpc_priv->crp_flags;
-			hdr->cch_dst_rank = crt_grp_priv_get_primary_rank(
+			hdr->cch_dst_rank = crt_grp_priv_get_primary_rank(  // 获取主要组的rank
 						rpc_priv->crp_grp_priv,
 						rpc_priv->crp_pub.cr_ep.ep_rank
 						);
-			hdr->cch_dst_tag = rpc_priv->crp_pub.cr_ep.ep_tag;
+			hdr->cch_dst_tag = rpc_priv->crp_pub.cr_ep.ep_tag;  // tag
 
-			if (crt_is_service())
+			if (crt_is_service())  // 服务器才有src rank
 				hdr->cch_src_rank =
 					crt_grp_priv_get_primary_rank(
 						rpc_priv->crp_grp_priv,
@@ -652,7 +661,7 @@ crt_proc_in_common(crt_proc_t proc, crt_rpc_input_t *data)
 			else
 				hdr->cch_src_rank = CRT_NO_RANK;
 
-			hdr->cch_hlc = crt_hlc_get();
+			hdr->cch_hlc = crt_hlc_get();  // hls 时间戳
 		}
 		rc = crt_proc_common_hdr(proc, &rpc_priv->crp_req_hdr);
 		if (rc != 0) {
@@ -699,7 +708,9 @@ out:
 	return rc;
 }
 
-/* NB: caller should pass in &rpc_pub->cr_output as the \param data */
+/** NB: caller should pass in &rpc_pub->cr_output as the \param data 
+ * 注意：呼叫者应将＆rpc_pub-> cr_output传递为\ param数据
+*/
 int
 crt_proc_out_common(crt_proc_t proc, crt_rpc_output_t *data)
 {

@@ -64,6 +64,7 @@ static inline uint64_t crt_hlc_localtime_get(void)
 	return pt & ~CRT_HLC_MASK;
 }
 
+/// 获取hlc时间戳
 uint64_t crt_hlc_get(void)
 {
 	uint64_t pt = crt_hlc_localtime_get();

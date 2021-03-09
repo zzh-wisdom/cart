@@ -573,6 +573,12 @@ d_hash_rec_addref(struct d_hash_table *htable, d_list_t *rlink)
 	ch_unlock(htable, true);
 }
 
+/**
+ * @brief 将rlink的引用计数减一
+ * 
+ * @param htable 
+ * @param rlink 
+ */
 void
 d_hash_rec_decref(struct d_hash_table *htable, d_list_t *rlink)
 {

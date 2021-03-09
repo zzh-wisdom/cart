@@ -634,6 +634,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	// 根据命令行，设置rpc_cli的参数
 	while ((ch = getopt(argc, argv, "c:t:f:")) != -1) {
 		switch (ch) {
 		case 'c':

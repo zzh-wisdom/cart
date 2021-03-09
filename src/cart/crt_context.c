@@ -204,6 +204,14 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 创建一个上下文
+ * 
+ * 上下文数量有限制
+ * 
+ * @param[out] crt_ctx 
+ * @return int 
+ */
 int
 crt_context_create(crt_context_t *crt_ctx)
 {
@@ -216,7 +224,7 @@ crt_context_create(crt_context_t *crt_ctx)
 	}
 
 	if (crt_gdata.cg_share_na &&
-	    crt_gdata.cg_ctx_num >= crt_gdata.cg_ctx_max_num) {
+	    crt_gdata.cg_ctx_num >= crt_gdata.cg_ctx_max_num) {  // 上下文超过限制
 		D_ERROR("Number of active contexts (%d) reached limit (%d).\n",
 			crt_gdata.cg_ctx_num, crt_gdata.cg_ctx_max_num);
 		D_GOTO(out, -DER_AGAIN);
