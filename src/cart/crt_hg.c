@@ -418,12 +418,22 @@ out:
 	return rc;
 }
 
+/**
+ * @brief 注册一些共享RPC id的调用
+ * 
+ * 主要是公共头部的处理
+ * 1. 双边RPC
+ * 2. 单边RPC
+ * 
+ * @param hg_class 
+ * @return int 
+ */
 static int
 crt_hg_reg_rpcid(hg_class_t *hg_class)
 {
 	int rc;
 
-	rc = crt_hg_reg(hg_class, CRT_HG_RPCID,
+	rc = crt_hg_reg(hg_class, CRT_HG_RPCID, // 双边
 			(crt_proc_cb_t)crt_proc_in_common,
 			(crt_proc_cb_t)crt_proc_out_common,
 			(crt_hg_rpc_cb_t)crt_rpc_handler_common);
@@ -433,7 +443,7 @@ crt_hg_reg_rpcid(hg_class_t *hg_class)
 		D_GOTO(out, rc = -DER_HG);
 	}
 
-	rc = crt_hg_reg(hg_class, CRT_HG_ONEWAY_RPCID,
+	rc = crt_hg_reg(hg_class, CRT_HG_ONEWAY_RPCID, // 单边
 			(crt_proc_cb_t)crt_proc_in_common,
 			(crt_proc_cb_t)crt_proc_out_common,
 			(crt_hg_rpc_cb_t)crt_rpc_handler_common);
@@ -442,6 +452,7 @@ crt_hg_reg_rpcid(hg_class_t *hg_class)
 			CRT_HG_ONEWAY_RPCID, rc);
 		D_GOTO(out, rc = -DER_HG);
 	}
+	// 只是该id的rpc调用没有回复
 	rc = HG_Registered_disable_response(hg_class, CRT_HG_ONEWAY_RPCID,
 					    HG_TRUE);
 	if (rc != 0)
@@ -576,7 +587,7 @@ crt_hg_init(crt_phy_addr_t *addr, bool server)
 	hg_gdata->chg_nacla = na_class;
 	hg_gdata->chg_hgcla = hg_class;
 
-	/* register the shared RPCID */
+	/* register the shared RPCID 注册一些共享RPC id的调用，如公共头部的处理*/
 	rc = crt_hg_reg_rpcid(hg_gdata->chg_hgcla);
 	if (rc != 0) {
 		D_ERROR("crt_hg_reg_rpcid failed, rc: %d.\n", rc);
@@ -842,6 +853,17 @@ crt_hg_context_lookup(hg_context_t *hg_ctx)
 	return (found == 1) ? crt_ctx : NULL;
 }
 
+/**
+ * @brief 公共处理函数，服务器方调用   
+ * 
+ * 1. 获取hg信息
+ * 2. 解压公共头部，获得opcode
+ * 3. 查找opcode的相关信息
+ * 4. 
+ * 
+ * @param hg_hdl 
+ * @return int 
+ */
 int
 crt_rpc_handler_common(hg_handle_t hg_hdl)
 {
@@ -858,7 +880,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	int			 rc = 0;
 	struct crt_rpc_priv	 rpc_tmp = {0};
 
-	hg_info = HG_Get_info(hg_hdl);
+	hg_info = HG_Get_info(hg_hdl);  // 检索类、上下文、rpc id等信息
 	if (hg_info == NULL) {
 		D_ERROR("HG_Get_info failed.\n");
 		D_GOTO(out, hg_ret = HG_PROTOCOL_ERROR);
@@ -879,11 +901,12 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	rpc_tmp.crp_pub.cr_ctx = crt_ctx;
 
 	rc = crt_hg_unpack_header(hg_hdl, &rpc_tmp, &proc);
-	if (rc != 0) {
+	if (rc != 0) {  // 解压失败，发送错误给客户端
 		D_ERROR("crt_hg_unpack_header failed, rc: %d.\n", rc);
 		crt_hg_reply_error_send(&rpc_tmp, -DER_MISC);
 		/** safe to return here because relevant portion of rpc_tmp is
 		 * already serialized by Mercury. Same for below.
+		 * 可以安全返回此处，因为rpc_tmp的相关部分已经被Mercury序列化了。以下相同。
 		 */
 		HG_Destroy(rpc_tmp.crp_hg_hdl);
 		D_GOTO(out, hg_ret = HG_SUCCESS);
@@ -896,7 +919,7 @@ crt_rpc_handler_common(hg_handle_t hg_hdl)
 	 */
 	rpc_tmp.crp_pub.cr_opc = opc;
 
-	opc_info = crt_opc_lookup(crt_gdata.cg_opc_map, opc, CRT_UNLOCK);
+	opc_info = crt_opc_lookup(crt_gdata.cg_opc_map, opc, CRT_UNLOCK);  //
 	if (opc_info == NULL) {
 		D_ERROR("opc: %#x, lookup failed.\n", opc);
 		/*

@@ -209,7 +209,7 @@ out:
  * 
  * @param map 
  * @param opc 
- * @param locked 为0则要上锁
+ * @param locked 为0则要上锁，可以理解为map此时的上锁状态，如果没上锁，在访问时就要上锁
  * @return struct crt_opc_info* 
  */
 struct crt_opc_info *

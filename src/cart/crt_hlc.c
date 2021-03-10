@@ -78,10 +78,16 @@ uint64_t crt_hlc_get(void)
 	return ret;
 }
 
+/**
+ * @brief 内部API，将时间戳与远程消息同步
+ * 
+ * @param msg 
+ * @return uint64_t 
+ */
 uint64_t crt_hlc_get_msg(uint64_t msg)
 {
 	uint64_t pt = crt_hlc_localtime_get();
-	uint64_t hlc, ret, ml = msg & ~CRT_HLC_MASK;
+	uint64_t hlc, ret, ml = msg & ~CRT_HLC_MASK; // 去掉第16位
 
 	do {
 		hlc = crt_hlc;
@@ -93,7 +99,7 @@ uint64_t crt_hlc_get_msg(uint64_t msg)
 			ret = (hlc < msg ? msg : hlc) + 1;
 		else
 			ret = hlc + 1;
-	} while (!atomic_compare_exchange(&crt_hlc, hlc, ret));
+	} while (!atomic_compare_exchange(&crt_hlc, hlc, ret));  // crt_hlc和hlc相等则交换且返回true
 
 	return ret;
 }

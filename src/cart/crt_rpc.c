@@ -1503,9 +1503,11 @@ crt_common_hdr_init(struct crt_rpc_priv *rpc_priv, crt_opcode_t opc)
 /**
  * @brief 初始化rpc私有信息结构体
  * 
+ * 
+ * 
  * @param rpc_priv 
  * @param crt_ctx 
- * @param srv_flag 
+ * @param srv_flag 表示是服务器使用的
  * @return int 
  */
 int

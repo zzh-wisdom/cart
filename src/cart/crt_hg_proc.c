@@ -475,6 +475,14 @@ out:
 }
 
 /* For unpacking only the common header to know about the CRT opc */
+/**
+ * @brief 仅用于解压缩公用头以了解CRT opc
+ * 
+ * @param handle 
+ * @param rpc_priv 
+ * @param proc 返回解压使用到的proc
+ * @return int 
+ */
 int
 crt_hg_unpack_header(hg_handle_t handle, struct crt_rpc_priv *rpc_priv,
 		     crt_proc_t *proc)
@@ -504,7 +512,7 @@ crt_hg_unpack_header(hg_handle_t handle, struct crt_rpc_priv *rpc_priv,
 		D_GOTO(out, rc = -DER_HG);
 	}
 
-	/* If extra buffer is null, rpc can fit into a regular buffer */
+	/* If extra buffer is null, rpc can fit into a regular buffer 如果多余的缓冲区为空，则rpc可以放入常规缓冲区中 */
 	if (in_buf == NULL) {
 		hg_ret = HG_Get_input_buf(handle, &in_buf, &in_buf_size);
 		if (hg_ret != HG_SUCCESS) {
@@ -517,7 +525,7 @@ crt_hg_unpack_header(hg_handle_t handle, struct crt_rpc_priv *rpc_priv,
 	ctx = rpc_priv->crp_pub.cr_ctx;
 	hg_ctx = &ctx->cc_hg_ctx;
 	hg_class = hg_ctx->chc_hgcla;
-	hg_ret = hg_proc_create_set(hg_class, in_buf, in_buf_size, HG_DECODE,
+	hg_ret = hg_proc_create_set(hg_class, in_buf, in_buf_size, HG_DECODE, // 创建一个新的编码/解码处理器。
 				    HG_CRC32, &hg_proc);
 	if (hg_ret != HG_SUCCESS) {
 		D_ERROR("Could not create proc, hg_ret: %d.", hg_ret);
@@ -532,7 +540,7 @@ crt_hg_unpack_header(hg_handle_t handle, struct crt_rpc_priv *rpc_priv,
 	}
 	(void)crt_hlc_get_msg(rpc_priv->crp_req_hdr.cch_hlc);
 	rpc_priv->crp_flags = rpc_priv->crp_req_hdr.cch_flags;
-	if (rpc_priv->crp_flags & CRT_RPC_FLAG_COLL) {
+	if (rpc_priv->crp_flags & CRT_RPC_FLAG_COLL) {  // 如果是集体rpc，则还要解码集体rpc的公共头部
 		rc = crt_proc_corpc_hdr(hg_proc, &rpc_priv->crp_coreq_hdr);
 		if (rc != 0) {
 			D_ERROR("crt_proc_corpc_hdr failed rc: %d.\n", rc);
@@ -547,6 +555,15 @@ out:
 }
 
 /* Copy the RPC header from one descriptor to another */
+/**
+ * @brief 将RPC标头从一个描述符复制到另一个描述符（私有信息）
+ * 
+ * 1. hg相关的信息（na地址、句柄、上下文、flags）
+ * 2. 公共头部
+ * 
+ * @param in 
+ * @param out 
+ */
 void
 crt_hg_header_copy(struct crt_rpc_priv *in, struct crt_rpc_priv *out)
 {
@@ -618,8 +635,18 @@ out:
 	return rc;
 }
 
-/** NB: caller should pass in &rpc_pub->cr_input as the \param data
-注意：呼叫者应将＆rpc_pub-> cr_input作为\param数据传递 */
+/** 
+ * 处理公共的头部，主要针对发出请求的处理，功能是编码参数
+ * 
+ * NB: caller should pass in &rpc_pub->cr_input as the \param data
+ * 
+ * 注意：呼叫者应将 ＆rpc_pub-> cr_input 作为参数data的传入值，即data为rpc的输入参数
+ * 
+ * data指针会在处理时，转化成相应输入参数结构体指针
+ * 
+ * 1. 编码公共头部
+ * 2. 编码输入参数
+*/
 int
 crt_proc_in_common(crt_proc_t proc, crt_rpc_input_t *data)
 {
@@ -675,15 +702,15 @@ crt_proc_in_common(crt_proc_t proc, crt_rpc_input_t *data)
 		 * 2. When received the RPC, if user calls HG_Get_input it call
 		 *    this funcion with DECODE, but the handling was changed to
 		 *    crt_hg_unpack_header + _unpack_body and the direct call
-		 *    of HG_Get_inputwas removed.
+		 *    of HG_Get_input was removed.
 		 *
 		 * XXXX: Keep assertion here to avoid silent logic change.
 		 */
-		D_ASSERT(proc_op != CRT_PROC_DECODE);
+		D_ASSERT(proc_op != CRT_PROC_DECODE);  // 就是说解码已经不使用这个函数了
 	}
 
-	if (rpc_priv->crp_flags & CRT_RPC_FLAG_COLL) {
-		rc = crt_proc_corpc_hdr(proc, &rpc_priv->crp_coreq_hdr);
+	if (rpc_priv->crp_flags & CRT_RPC_FLAG_COLL) { // 集体RPC
+		rc = crt_proc_corpc_hdr(proc, &rpc_priv->crp_coreq_hdr); // 处理的公共头部发生变化
 		if (rc != 0) {
 			D_ERROR("crt_proc_corpc_hdr failed rc: %d.\n", rc);
 			D_GOTO(out, rc);
@@ -698,7 +725,7 @@ crt_proc_in_common(crt_proc_t proc, crt_rpc_input_t *data)
 		D_GOTO(out, rc);
 	}
 
-	rc = crt_proc_input(rpc_priv, proc);
+	rc = crt_proc_input(rpc_priv, proc);  // 编码输入参数
 	if (rc != 0) {
 		D_ERROR("unpack input fails for opc: %#x\n",
 			rpc_priv->crp_pub.cr_opc);
@@ -709,7 +736,9 @@ out:
 }
 
 /** NB: caller should pass in &rpc_pub->cr_output as the \param data 
- * 注意：呼叫者应将＆rpc_pub-> cr_output传递为\ param数据
+ * 注意：呼叫者应将＆rpc_pub-> cr_output传递为参数data的值
+ * 
+ * 应该是rpc执行完成了，处理从服务器发回的回复信息。即还是解码
 */
 int
 crt_proc_out_common(crt_proc_t proc, crt_rpc_output_t *data)

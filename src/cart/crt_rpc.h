@@ -92,7 +92,7 @@ struct crt_corpc_hdr {
 
 /** CaRT layer common header */
 struct crt_common_hdr {
-	uint32_t	cch_opc;
+	uint32_t	cch_opc;  // 公共头部也具有opcode的信息
 	/** RPC request flag, see enum crt_rpc_flags_internal */
 	uint32_t	cch_flags;
 	/** HLC timestamp */

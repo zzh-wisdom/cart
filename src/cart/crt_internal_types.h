@@ -242,7 +242,7 @@ struct crt_opc_info {
 	 * as the rpc descriptor.
 	 * 用于分配rpc的描述符，即
 	 */
-	size_t			 coi_rpc_size;  /// 该rpc编码后的大小，元信息+输出+输入
+	size_t			 coi_rpc_size;  /// 该rpc编码后的大小，元信息（rpc私有信息）+输出+输入
 	off_t			 coi_input_offset;  /// 输入在buffer中的起始偏移
 	off_t			 coi_output_offset; /// 输出在buffer中的起始偏移
 	struct crt_req_format	*coi_crf;   /// 输入输出编解码
